@@ -3,6 +3,12 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 
+/*
+ *
+ * ci dovremo lavorare per il progetto.
+ *
+ */
+
 public class TypeRels {
 
 	// valuta se il tipo "a" e' <= al tipo "b", dove "a" e "b" sono tipi di base: IntTypeNode o BoolTypeNode

@@ -34,7 +34,8 @@ import compiler.lib.*;
 public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 	// la symobl table è una lista di mappe. Una mappa per ogni scope. Nella mappa avrò come chiave la stringa della var
-	// o funzione e come valore la STEntry (palline del nostro albero) ovvero SymbolTableEntry un oggetto che conterrà le info necessarie a tener traccia
+	// o funzione e come valore la STEntry (palline del nostro albero) ovvero SymbolTableEntry un oggetto che conterrà
+	// le info necessarie a tener traccia
 	// delle palline del nostro albero. Controllo quindi che le dichiarazioni ci siano (check) e poi arrichisce l'albero.
 	// alla fine di sta roba la symtable scompare, rimane solo l'ast arricchito.
 	// ATTENZIONE: il FRONTE della symTable è sempre a livello nestinglevel. Quindi se per esempio nl=2 allora il fronte
@@ -232,7 +233,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			n.entry = entry;
 			n.nl = nestingLevel;
 		}
-		// visito glim argomenti per controllare la giusta dichiarazione. Tutte le volte che visito io posso incontrare cose
+		// visito gli argomenti per controllare la giusta dichiarazione. Tutte le volte che visito io posso incontrare cose
 		// di ogni tipo, ci potrebbe essere anche un albero complicatissimo!
 		for (Node arg : n.arglist) visit(arg);
 		return null;

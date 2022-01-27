@@ -98,7 +98,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	}
 
 	@Override
-	public Node visitTimes(TimesContext c) {
+	public Node visitTimesDiv(TimesDivContext c) {
 		if (print) printVarAndProdName(c);
 		// so che sto visitando un Times (lo so dal SyntaxTree) e quindi dovrò creare un TimesNode. In visitTimes cosa facevamo?
 		// inizialmente noi calcolavamo direttamente l'espressione dal ST. Mentre ora non dobbiamo calcolare nulla! Dobbiamo
@@ -106,7 +106,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		// due argomenti. Quindi avrà due sotto-alberi da scoprire, di conseguenza facciamo la visita dei suoi due figli
 		// che, una volta arrivati in fondo a loro volta della loro visita, restituiranno un valore che sarà inserito nel TimesNode.
 		// analogo discorso per visitPlus ecc. Il concetto generale è questo con 1, 2 o n argomenti nel costruttore.
-		Node n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
+		Node n = null;
+		if ( c.DIV() != null ) {
+			n = new DivNode(visit(c.exp(0)), visit(c.exp(1)));
+		} else {
+			n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
+		}
 		n.setLine(c.TIMES().getSymbol().getLine());		// setLine added
         return n;		
 	}

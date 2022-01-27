@@ -99,15 +99,32 @@ public int lexicalErrors=0;
  *------------------------------------------------------------------*/
   
 prog  : progbody EOF ;
-     
-progbody : LET dec+ IN exp SEMIC  #letInProg //semic è il ;
-         | exp SEMIC              #noDecProg
+
+progbody : LET ( cldec+ dec* | dec+ ) IN exp SEMIC #letInProg   //semic è il ;
+         | exp SEMIC                               #noDecProg
          ;
-  
-dec : VAR ID COLON type ASS exp SEMIC  #vardec
-    | FUN ID COLON type LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR // perchè non basta una stella di klenee? Perchè se ho un argomento non serve la virgola dopo l'argomento se ne ho più di uno sì. Posso anche non avere parametri.
-        	(LET dec+ IN)? exp SEMIC   #fundec
+
+cldec  : CLASS ID (EXTENDS ID)?
+              LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR
+              CLPAR
+                   methdec*
+              CRPAR ;
+
+methdec : FUN ID COLON type
+              LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR
+                   (LET dec+ IN)? exp
+              SEMIC ;
+
+dec : VAR ID COLON type ASS exp SEMIC #vardec
+    | FUN ID COLON type
+          LPAR (ID COLON type (COMMA ID COLON type)* )? RPAR // perchè non basta una stella di klenee? Perchè se ho
+                                                            // un argomento non serve la virgola dopo l'argomento se ne
+                                                            // ho più di uno sì. Posso anche non avere parametri.
+               (LET dec+ IN)? exp
+          SEMIC #fundec
     ;
+
+
         // come facciamo a mettere allo stesso livello di priorità due simboli su ANTLR ? Ad esempio se volessimo avere in una
         // produzione o TIMES o DIV perchè sono allo stesso livello metto (prendendo la produzione sotto):
         // exp (TIMES | DIV) exp. Nel visitor cosa dobbiamo considerare? due casi uno che sia TIMES o DIV. Dobbiamo fare una
@@ -129,9 +146,11 @@ dec : VAR ID COLON type ASS exp SEMIC  #vardec
         //produzioni che cominciano con un token oppure, ad es., il token PLUS in #plus
         //(la ricorsione a sinistra trasformata internamente in destra lo rende primo
         //token nel ciclo interno in cui sono matchate le produzioni #plus).
-exp     : exp TIMES exp #times
-        | exp PLUS  exp #plus
-        | exp EQ  exp   #eq 
+exp     : exp (TIMES | DIV) exp #timesDiv
+        | exp (PLUS | MINUS) exp #plusMinus
+        | exp (EQ | GE | LE) exp #comp
+        | exp (AND | OR) exp #andOr
+        | NOT exp #not
         | LPAR exp RPAR #pars
     	| MINUS? NUM #integer // minus non ci deve sempre essere, quindi metto il ?, così gestisco il caso del - dell'operatore
     	                      // seguito da un altro - (es: 8--7, il primo - è dell'operazione, il secondo del numero)
@@ -141,14 +160,18 @@ exp     : exp TIMES exp #times
     	                      // riguardare lezione 11-02 (gli ultimi 40 minuti).
 	    | TRUE #true     
 	    | FALSE #false
+	    | NULL #null
+        | NEW ID LPAR (exp (COMMA exp)* )? RPAR #new
 	    | IF exp THEN CLPAR exp CRPAR ELSE CLPAR exp CRPAR  #if   //CLPAR = curly left paraenthesis
 	    | PRINT LPAR exp RPAR #print
 	    | ID #id  //uso di una variabile identificata da un id
 	    | ID LPAR (exp (COMMA exp)* )? RPAR #call //uso di una funzione identificata da un id, che potrebbe non avere parametri
+	    | ID DOT ID LPAR (exp (COMMA exp)* )? RPAR #dotCall
         ;
              
 type    : INT #intType
         | BOOL #boolType
+        | ID #idType
  	    ;  
  	  		  
 /*------------------------------------------------------------------
@@ -181,16 +204,23 @@ type    : INT #intType
  *------------------------------------------------------------------*/
 
 PLUS  	: '+' ;
-MINUS	: '-' ; 
+MINUS   : '-' ; //
 TIMES   : '*' ;
+DIV 	: '/' ; //
 LPAR	: '(' ;
 RPAR	: ')' ;
 CLPAR	: '{' ;
 CRPAR	: '}' ;
 SEMIC 	: ';' ;
-COLON   : ':' ; 
+COLON   : ':' ;
 COMMA	: ',' ;
-EQ	    : '==' ;	
+DOT	    : '.' ;
+OR	    : '||'; //
+AND	    : '&&'; //
+NOT	    : '!' ; //
+GE	    : '>=' ; //
+LE	    : '<=' ; //
+EQ	    : '==' ;
 ASS	    : '=' ;
 TRUE	: 'true' ;
 FALSE	: 'false' ;
@@ -198,13 +228,17 @@ IF	    : 'if' ;
 THEN	: 'then';
 ELSE	: 'else' ;
 PRINT	: 'print' ;
-LET     : 'let' ;	
-IN      : 'in' ;	
+LET     : 'let' ;
+IN      : 'in' ;
 VAR     : 'var' ;
-FUN	    : 'fun' ;	  
+FUN	    : 'fun' ;
+CLASS	: 'class' ;
+EXTENDS : 'extends' ;
+NEW 	: 'new' ;
+NULL    : 'null' ;
 INT	    : 'int' ;
 BOOL	: 'bool' ;
-NUM     : '0' | ('1'..'9')('0'..'9')* ; 
+NUM     : '0' | ('1'..'9')('0'..'9')* ;
 
 ID  	: ('a'..'z'|'A'..'Z')('a'..'z' | 'A'..'Z' | '0'..'9')* ;
 
@@ -212,7 +246,6 @@ ID  	: ('a'..'z'|'A'..'Z')('a'..'z' | 'A'..'Z' | '0'..'9')* ;
 WHITESP  : ( '\t' | ' ' | '\r' | '\n' )+    -> channel(HIDDEN) ;
 
 COMMENT : '/*' .*? '*/' -> channel(HIDDEN) ;
- 
-ERR   	 : . { System.out.println("Invalid char "+getText()+" at line "+getLine()); lexicalErrors++; } -> channel(HIDDEN); 
 
+ERR   	 : . { System.out.println("Invalid char: "+ getText() +" at line "+getLine()); lexicalErrors++; } -> channel(HIDDEN);
 

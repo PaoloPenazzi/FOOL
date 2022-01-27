@@ -1,4 +1,4 @@
-// Generated from C:/Users/angel/Desktop/UniBo/Primo Anno/LCMC/Laboratorio/Works/FOOL_LCMC/src/svm\SVM.g4 by ANTLR 4.9.2
+// Generated from C:/Users/angel/Desktop/fool/src/svm\SVM.g4 by ANTLR 4.9.2
 package svm;
 
 import java.util.*;
@@ -99,6 +99,8 @@ public class SVMParser extends Parser {
 
 	public int[] code = new int[ExecuteVM.CODESIZE];
 	private int i = 0;
+
+
 	private Map<String,Integer> labelDef = new HashMap<>();
 	private Map<Integer,String> labelRef = new HashMap<>();
 
@@ -119,19 +121,6 @@ public class SVMParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assembly; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof SVMListener ) ((SVMListener)listener).enterAssembly(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof SVMListener ) ((SVMListener)listener).exitAssembly(this);
-		}
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SVMVisitor ) return ((SVMVisitor<? extends T>)visitor).visitAssembly(this);
-			else return visitor.visitChildren(this);
-		}
 	}
 
 	public final AssemblyContext assembly() throws RecognitionException {
@@ -206,19 +195,6 @@ public class SVMParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_instruction; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof SVMListener ) ((SVMListener)listener).enterInstruction(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof SVMListener ) ((SVMListener)listener).exitInstruction(this);
-		}
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SVMVisitor ) return ((SVMVisitor<? extends T>)visitor).visitInstruction(this);
-			else return visitor.visitChildren(this);
-		}
 	}
 
 	public final InstructionContext instruction() throws RecognitionException {
@@ -247,7 +223,7 @@ public class SVMParser extends Parser {
 				setState(17);
 				((InstructionContext)_localctx).l = match(LABEL);
 				code[i++] = PUSH;
-					    		             labelRef.put(i++,(((InstructionContext)_localctx).l!=null?((InstructionContext)_localctx).l.getText():null));
+					    		         labelRef.put(i++,(((InstructionContext)_localctx).l!=null?((InstructionContext)_localctx).l.getText():null));
 				}
 				break;
 			case 3:
