@@ -276,6 +276,100 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		);
 	}
 
+	@Override
+	public String visitNode(GreaterEqualNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel();
+		String l2 = freshLabel();
+		// right - left
+		// se il risultato è <= di 0 allora vuol dire che left è >= a right
+		return nlJoin(				// esempio di funzionamento sotto
+				visit(n.right),
+				visit(n.left),
+				"sub",
+				"push 0",
+				"bleq "+l1,     // (right - left) è minore o uguale di 0? se si salto a l1
+				"push 0",     // non sono uguali quindi metto 0
+				"b "+l2,  //e faccio un salto incondizionato a l2 che mi fa proseguire il codice (sennò proseguirei e metterei 1 sullo stack..)
+				l1+":",    // sono l1 e metto push 1
+				"push 1", //pusho 1
+				l2+":"  // continuo il mio codice..
+		);
+	}
+
+	@Override
+	public String visitNode(LessEqualNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel();
+		String l2 = freshLabel();
+		return nlJoin(	// esempio di funzionamento sotto
+				visit(n.left),
+				visit(n.right),
+				"bleq "+l1,     // left è minore o uguale di right? se si salto a l1
+				"push 0",     // non sono uguali quindi metto 0
+				"b "+l2,  //e faccio un salto incondizionato a l2 che mi fa proseguire il codice (sennò proseguirei e metterei 1 sullo stack..)
+				l1+":",    // sono l1 e metto push 1
+				"push 1", //pusho 1
+				l2+":"  // continuo il mio codice..
+		);
+	}
+
+	@Override
+	public String visitNode(AndNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel(); //genero nome label nuovo
+		String l2 = freshLabel(); //genero nome label nuovo
+		// left + right
+		// && ritorna 1 se sia left che right sono 1, quindi la somma deve essere 2
+		return nlJoin(				// esempio di funzionamento sotto
+				visit(n.left),
+				visit(n.right),
+				"sum",
+				"push 2",
+				"beq "+l1,     // la somma di left e right fa 2? se si salto a l1
+				"push 0",     // la somma è diversa da 2 (0 o 1) quindi pusho 0 (and non soddisfatto)
+				"b "+l2,  //e faccio un salto incondizionato a l2 che mi fa proseguire il codice (sennò proseguirei e metterei 1 sullo stack..)
+				l1+":",    // sono l1 e metto push 1
+				"push 1", //la somma è 2 quindi pusho 1 (and soddisfatto)
+				l2+":"  // continuo il mio codice..
+		);
+	}
+
+	@Override
+	public String visitNode(OrNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel(); //genero nome label nuovo
+		String l2 = freshLabel(); //genero nome label nuovo
+		// left + right
+		// || ritorna 1 se almeno uno tra left e right è 1, quindi la somma deve essere 1 o 2, ma non 0
+		// la somma tra left e right, essendo booleani, può essere solo 0,1,2 quindi basta controllare che non sia 0
+		return nlJoin(				// esempio di funzionamento sotto
+				visit(n.left),
+				visit(n.right),
+				"sum",
+				"push 0",
+				"beq "+l1,     // la somma di left e right fa 0? se si salto a l1
+				"push 1",     // la somma è diversa da 0 (1 o 2) quindi pusho 1 (or soddisfatto)
+				"b "+l2,  //e faccio un salto incondizionato a l2 che mi fa proseguire il codice (sennò proseguirei e metterei 0 sullo stack..)
+				l1+":",    // sono l1 e metto push 1
+				"push 0", // la somma è 0 quindi pusho 0 (or non soddisfatto)
+				l2+":"  // continuo il mio codice..
+		);
+	}
+
+	@Override
+	public String visitNode(NotNode n) {
+		if (print) printNode(n);
+		// exp può essere 0 o 1 (boolean type)
+		// Facendo 1 - exp, otteniamo 0 se exp è 1, e 1 se exp è 0
+		return nlJoin(				// esempio di funzionamento sotto
+				"push 1",
+				visit(n.exp),
+				"sub"
+		);
+	}
+
+
 	// ragionamento identico al PlusNode
 	@Override
 	public String visitNode(TimesNode n) {
@@ -285,6 +379,16 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 			visit(n.right),
 			"mult"
 		);	
+	}
+
+	@Override
+	public String visitNode(DivNode n) {
+		if (print) printNode(n);
+		return nlJoin(
+				visit(n.left),
+				visit(n.right),
+				"div"
+		);
 	}
 
 	// il plusNode cos'è? l'espressione risultante della somma tra il figlio di sx e quello di dx. Entrambi i figli seguono, come
@@ -302,6 +406,16 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 			visit(n.right),
 			"add"				
 		); //genera ad esempio "push 5\n push 9\n add\n"
+	}
+
+	@Override
+	public String visitNode(MinusNode n) {
+		if (print) printNode(n);
+		return nlJoin(
+				visit(n.left),
+				visit(n.right),
+				"sub"
+		);
 	}
 
 	// creiamo la prima parte del layout dell'AR della funzione (cioè dall'AL in sù perhè la parte prima è gestita in fase di dichiarazione

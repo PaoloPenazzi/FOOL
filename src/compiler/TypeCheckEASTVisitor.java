@@ -181,8 +181,62 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		// per permettere di equiparare queste due cose. Quindi il concetto è questo: controllare che i tipi che
 		// confrontiamo siano sottotipo dell'altro, così da avere una sorta di relazione.
 		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
-			throw new TypeException("Incompatible types in equal",n.getLine());
+			throw new TypeException("Incompatible types in equal ",n.getLine());
 		// è un == quindi cosa torniamo? Un booleano!
+		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(GreaterEqualNode n) throws TypeException {
+		if (print) printNode(n);
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
+			throw new TypeException("Incompatible types in greater equal ",n.getLine());
+		// è un >= quindi cosa torniamo? Un booleano!
+		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(LessEqualNode n) throws TypeException {
+		if (print) printNode(n);
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
+			throw new TypeException("Incompatible types in less equal ",n.getLine());
+		// è un <= quindi cosa torniamo? Un booleano!
+		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(NotNode n) throws TypeException {
+		if (print) printNode(n);
+		TypeNode e = visit(n.exp);
+		if ( areBoolean(e) )
+			throw new TypeException("Not operator applied to non-boolean exp ",n.getLine());
+		// è un ! quindi cosa torniamo? Un booleano!
+		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(AndNode n) throws TypeException {
+		if (print) printNode(n);
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		if ( areBoolean(l,r) )
+			throw new TypeException("And operator applied to non-boolean exps ",n.getLine());
+		// è un && quindi cosa torniamo? Un booleano!
+		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(OrNode n) throws TypeException {
+		if (print) printNode(n);
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		if ( areBoolean(l,r) )
+			throw new TypeException("Or operator applied to non-boolean exps ",n.getLine());
+		// è un && quindi cosa torniamo? Un booleano!
 		return new BoolTypeNode();
 	}
 
@@ -192,7 +246,16 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		// concetto identico al PlusNode, vedere commenti sotto.
 		if ( !(isSubtype(visit(n.left), new IntTypeNode())
 				&& isSubtype(visit(n.right), new IntTypeNode())) )
-			throw new TypeException("Non integers in multiplication",n.getLine());
+			throw new TypeException("Non integers in multiplication ",n.getLine());
+		return new IntTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(DivNode n) throws TypeException {
+		if (print) printNode(n);
+		if ( !(isSubtype(visit(n.left), new IntTypeNode())
+				&& isSubtype(visit(n.right), new IntTypeNode())) )
+			throw new TypeException("Non integers in division ",n.getLine());
 		return new IntTypeNode();
 	}
 
@@ -206,8 +269,17 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		// ad intero).
 		if ( !(isSubtype(visit(n.left), new IntTypeNode())
 				&& isSubtype(visit(n.right), new IntTypeNode())) )
-			throw new TypeException("Non integers in sum",n.getLine());
+			throw new TypeException("Non integers in sum ",n.getLine());
 		// la somma dovrà tornare un intero, OVVIAMENTE
+		return new IntTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(MinusNode n) throws TypeException {
+		if (print) printNode(n);
+		if ( !(isSubtype(visit(n.left), new IntTypeNode())
+				&& isSubtype(visit(n.right), new IntTypeNode())) )
+			throw new TypeException("Non integers in subtraction ",n.getLine());
 		return new IntTypeNode();
 	}
 

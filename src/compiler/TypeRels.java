@@ -16,4 +16,17 @@ public class TypeRels {
 		return a.getClass().equals(b.getClass()) || ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
 	}
 
+	// torna vero se tutti i TypeNode passati sono BoolTypeNode, false altrimenti
+	public static boolean areBoolean(TypeNode... nodes) {
+		for(TypeNode node : nodes){
+			if(!(node instanceof BoolTypeNode)){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// TODO create method isSubClass
+	// TODO check functioning of TypeCheckEASTVisitor in eq ge le visits
+
 }
