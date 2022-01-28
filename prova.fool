@@ -1,3 +1,9 @@
   class Account (money:int) {
+        getMoney()
   }
+
   var myMoney:Account = new Account(10)
+  var yourMoney:Account = new Account(10)
+
+  var totalMoney = myMoney.getMoney();
+  var totalMoney = getMoney(10, y)

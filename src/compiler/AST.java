@@ -25,12 +25,14 @@ import compiler.lib.*;
 public class AST {
 
 	public static class ClassNode extends Node {
+		final String id;
 		final List<FieldNode> fieldList;
 		final List<MethodNode> methodList;
 
-		ClassNode(List<FieldNode> f, List<MethodNode> m, Node e) {
-			fieldList = Collections.unmodifiableList(f);
-			methodList = Collections.unmodifiableList(m);
+		ClassNode(List<FieldNode> fields, List<MethodNode> methods, String id) {
+			this.id = id;
+			fieldList = Collections.unmodifiableList(fields);
+			methodList = Collections.unmodifiableList(methods);
 		}
 
 		@Override
@@ -43,9 +45,9 @@ public class AST {
 		final String id;
 		final TypeNode type;
 
-		FieldNode(String s, TypeNode t) {
-			id = s;
-			type = t;
+		FieldNode(String id, TypeNode type) {
+			this.id = id;
+			this.type = type;
 		}
 
 		@Override
@@ -55,12 +57,48 @@ public class AST {
 	}
 
 	public static class MethodNode extends Node {
+		final String id;
+		final TypeNode retType;
+		final List<ParNode> parlist;
+		final List<DecNode> declist;
+		final Node exp;
+
+		public MethodNode(Node e, String id, TypeNode retType, List<ParNode> paramList, List<DecNode> decList) {
+			this.id = id;
+			this.retType = retType;
+			this.parlist = paramList;
+			this.declist = decList;
+			this.exp = e;
+		}
 
 		@Override
 		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
 			return visitor.visitNode(this);
 		}
 	}
+
+	// Chiamata ad un metodo della classe da fuori.
+	// var value = C.getValue();
+	public static class ClassCallNode extends Node {
+		final Node exp;
+		final String classID;
+		final String methodID;
+		final List<Node> argList;
+
+		public ClassCallNode(Node e, String classID, String methodID, List<Node> args) {
+			this.exp = e;
+			this.classID = classID;
+			this.methodID = methodID;
+			this.argList = args;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+
 	
 	public static class ProgLetInNode extends Node {
 		final List<DecNode> declist;
