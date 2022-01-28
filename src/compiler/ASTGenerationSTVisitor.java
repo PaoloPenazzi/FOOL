@@ -190,10 +190,11 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 				fieldList.add(p);
 			}
 
-			//stessa cosa per i campi
-
-
-
+			List<MethodNode> methodNodeList = new ArrayList<>();
+			//for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+			for (MethdecContext dec : c.methdec()) {
+				methodNodeList.add((MethodNode) visit(dec));
+			}
 
 		}
 		return n;
