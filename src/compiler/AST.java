@@ -24,7 +24,27 @@ import compiler.lib.*;
  */
 public class AST {
 
-	public static class ClassNode extends Node {
+	// nodo creazione istanza di classe
+	public static class NewNode extends Node {
+		final String id;
+		final List<Node> argList;
+
+		STentry entry;
+
+		public NewNode(String id, List<Node> argList) {
+			this.id = id;
+			this.argList = argList;
+		}
+
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+
+	public static class ClassNode extends DecNode {
 		final String id;
 		final List<FieldNode> fieldList;
 		final List<MethodNode> methodList;
@@ -41,7 +61,8 @@ public class AST {
 		}
 	}
 
-	public static class FieldNode extends Node {
+	// nodo dichiarazione del campo
+	public static class FieldNode extends DecNode {
 		final String id;
 		final TypeNode type;
 
@@ -56,7 +77,8 @@ public class AST {
 		}
 	}
 
-	public static class MethodNode extends Node {
+	// nodo dichiarazione di un metodo
+	public static class MethodNode extends DecNode {
 		final String id;
 		final TypeNode retType;
 		final List<ParNode> parlist;
@@ -85,6 +107,10 @@ public class AST {
 		final String methodID;
 		final List<Node> argList;
 
+		STentry entry; //id1 cercata come per ID in IdNode e CallNode (discesa livelli)
+		STentry methodEntry; // id2 cercata nella Virtual Table (raggiunta tramite la Class Table)
+		                           // della classe del tipo RefTypeNode di ID1 (se ID1 non ha tale tipo si ha una notifica di errore)
+
 		public ClassCallNode(Node e, String classID, String methodID, List<Node> args) {
 			this.exp = e;
 			this.classID = classID;
@@ -98,8 +124,6 @@ public class AST {
 		}
 	}
 
-
-	
 	public static class ProgLetInNode extends Node {
 		final List<DecNode> declist;
 		final Node exp;
@@ -323,6 +347,17 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 
+	// nodo per il null c= null
+	public static class EmptyNode extends Node {
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	//--------------------- TYPE -----------------------------------------
+
 	/*
 	*
 	* ArrowTypeNode contiene le informazioni corrispondenti alla notazione per i tipi funzionali vista a lezione:
@@ -354,5 +389,57 @@ public class AST {
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
+
+	public static class ClassTypeNode extends TypeNode {
+		final List<TypeNode> allFields;
+		final List<ArrowTypeNode> allMethods;
+
+		public ClassTypeNode(List<TypeNode> allFields, List<ArrowTypeNode> allMethods) {
+			this.allFields = allFields;
+			this.allMethods = allMethods;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class MethodTypeNode extends TypeNode {
+		final ArrowTypeNode fun;
+
+		public MethodTypeNode(ArrowTypeNode fun) {
+			this.fun = fun;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class RefTypeNode extends TypeNode {
+		final String id;
+
+		public RefTypeNode(String id) {
+			this.id = id;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class EmptyTypeNode extends TypeNode {
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+
+
 
 }

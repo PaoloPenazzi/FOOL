@@ -166,10 +166,13 @@ public class BaseASTVisitor<S,E extends Exception> {
 	public S visitNode(MethodNode n) throws E {throw new UnimplException();}
 	public S visitNode(ClassCallNode node) throws E {throw new UnimplException();}  //  C.getValue()
 	public S visitNode(NewNode n) throws E {throw new UnimplException();}			//  new C()
-//	public S visitNode(EmptyNode n) throws E {throw new UnimplException();}
-//
-	public S visitNode(ClassTypeNode n) throws E {throw new UnimplException();}
-	public S visitNode(MethodTypeNode n) throws E {throw new UnimplException();}
-	public S visitNode(RefTypeNode n) throws E {throw new UnimplException();}
-//	public S visitNode(EmptyTypeNode n) throws E {throw new UnimplException();}
+	public S visitNode(EmptyNode n) throws E {throw new UnimplException();}			// null
+
+	public S visitNode(ClassTypeNode n) throws E {throw new UnimplException();}  // tipo della classe (RICORDATI CHE
+																				// CONTROLLI SOLO I TIPI, I RIFERIMENTI
+																				// AGLI USI LI HAI GIÀ ATTACCATI)
+	public S visitNode(MethodTypeNode n) throws E {throw new UnimplException();} // tipo del metodo
+	public S visitNode(RefTypeNode n) throws E {throw new UnimplException();} // contiene l'ID della classe come campo
+	public S visitNode(EmptyTypeNode n) throws E {throw new UnimplException();} // tipo di null, non in AST ma
+																			    // restituito da typeCheck() di EmptyNode
 }
