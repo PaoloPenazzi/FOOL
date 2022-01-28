@@ -1,5 +1,6 @@
 package compiler;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -173,6 +174,31 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return n;
 	}
 
+	//dichiarazione di classe
+	@Override
+	public Node visitCldec(CldecContext c) {
+		if (print) printVarAndProdName(c);
+
+		Node n = null;
+		if (c.ID(0)!=null) {
+
+			List<FieldNode> fieldList = new ArrayList<>();
+			// per ogni campo prenderci id del campo e tipo
+			for (int i = 1; i < c.ID().size(); i++) {
+				FieldNode p = new FieldNode(c.ID(i).getText(),(TypeNode) visit(c.type(i)));
+				p.setLine(c.ID(i).getSymbol().getLine());
+				fieldList.add(p);
+			}
+
+			//stessa cosa per i campi
+
+
+
+
+		}
+		return n;
+	}
+
 	/*
 	* Generazione nodo AST per la dichiarazione di variabili. L'id del nodo da dove lo prendiamo? Dal syntax tree. Il tipo
 	* dove lo prendiamo? Beh per scoprire il tipo dovremo fare la visita del nodo nell'ST che ci ritornerà un tipo (che potrà
@@ -310,4 +336,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		n.setLine(c.ID().getSymbol().getLine());
 		return n;
 	}
+
+
 }
