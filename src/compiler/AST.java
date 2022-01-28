@@ -23,6 +23,44 @@ import compiler.lib.*;
 *
  */
 public class AST {
+
+	public static class ClassNode extends Node {
+		final List<FieldNode> fieldList;
+		final List<MethodNode> methodList;
+
+		ClassNode(List<FieldNode> f, List<MethodNode> m, Node e) {
+			fieldList = Collections.unmodifiableList(f);
+			methodList = Collections.unmodifiableList(m);
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class FieldNode extends Node {
+		final String id;
+		final TypeNode type;
+
+		FieldNode(String s, TypeNode t) {
+			id = s;
+			type = t;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class MethodNode extends Node {
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
 	
 	public static class ProgLetInNode extends Node {
 		final List<DecNode> declist;

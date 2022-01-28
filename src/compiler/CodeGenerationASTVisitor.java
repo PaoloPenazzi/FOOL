@@ -324,7 +324,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(				// esempio di funzionamento sotto
 				visit(n.left),
 				visit(n.right),
-				"sum",
+				"add",
 				"push 2",
 				"beq "+l1,     // la somma di left e right fa 2? se si salto a l1
 				"push 0",     // la somma è diversa da 2 (0 o 1) quindi pusho 0 (and non soddisfatto)
@@ -346,7 +346,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(				// esempio di funzionamento sotto
 				visit(n.left),
 				visit(n.right),
-				"sum",
+				"add",
 				"push 0",
 				"beq "+l1,     // la somma di left e right fa 0? se si salto a l1
 				"push 1",     // la somma è diversa da 0 (1 o 2) quindi pusho 1 (or soddisfatto)
