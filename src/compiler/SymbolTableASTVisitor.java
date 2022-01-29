@@ -328,4 +328,111 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		if (print) printNode(n, n.val.toString());
 		return null;
 	}
+
+	//----------------- OOSYMTAB----------------------
+
+	@Override
+	public Void visitNode(ClassNode n){
+		if (print) printNode(n);
+		//prendo symtable al livello attuale come per la VarNode.
+		Map<String, STentry> hm = symTable.get(nestingLevel);
+
+		// prendiamo i campi e li salviamo
+		List<TypeNode> fieldTypes = new ArrayList<>();
+		for (FieldNode field : n.fieldList) fieldTypes.add(field.getType());
+
+		// prendiamo i metodi e per ognuno di questi prendiamo i tipi parametri ed il tipo di ritorno e per ognuno di questi
+		// ci facciamo un arrowtypenode (che in pratica sono tante dichiarazioni di funzioni quindi bisogna fare come
+		// in fundec). Un volta creato questo arrowtypenode lo aggiungiamo alla lista di arrowtyopenode.
+		List<ArrowTypeNode> methodTypes = new ArrayList<>();
+		for (MethodNode methodNode : n.methodList) {
+			List<TypeNode> paramMethodTypes = new ArrayList<>();
+			for (ParNode field : methodNode.parlist) paramMethodTypes.add(field.getType());
+
+			methodTypes.add(new ArrowTypeNode(paramMethodTypes, methodNode.retType));
+		}
+
+		//creo la pallina. Gestisco la dichiarazione di funzione: quindi metto il nestin level e creo l'arrowtype node
+		// (tipo funzionale) della funzione (parTypes -> retType). I tipi dei parametri finisco in due posti: qua nella dichiaraizone
+		// del tipo della funzione e nella dichiarazione proprio dei parametri stessi di cui dichiariamo anche il tipo.
+		STentry entry = new STentry(nestingLevel, new ClassTypeNode(fieldTypes, methodTypes),decOffset--);
+
+		//TODO....
+
+		//inserimento di ID nella symtable. RICORDA CHE IL NOME DELLA FUNZIONE E QUINDI LA FUNZIONE, VIENE INSERITA
+		// NELLO SCOPE ESTERNO NON IN QUELLO INTERNO, QUINDI METTO L'ID NELLO SCOPE ESTERNO E POI NE CREO UN ALTRO
+		// DOVE AVVERRÀ IL RESTO DELLA ROBA.
+//		if (hm.put(n.id, entry) != null) {
+//			System.out.println("Fun id " + n.id + " at line "+ n.getLine() +" already declared");
+//			stErrors++;
+//		}
+//
+//		//creare una nuova hashmap per la symTable. entro in un nuovo scope
+//		nestingLevel++;
+//		//aggiungo nuova mappa.
+//		Map<String, STentry> hmn = new HashMap<>();
+//		symTable.add(hmn);
+//
+//		//entro in un nuovo scope, creo un nuovo AR e quindi devo ripartire da -2, salvandomi l'offset da cui son partito.
+//		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
+//		decOffset=-2;
+//
+//		/*
+//		 *
+//		 * Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
+//		 * In pratca il pezzo di codice qui sotto è la visitParNode.
+//		 *
+//		 * parOffset è il contatore dell'offset dei parametri
+//		 *
+//		 */
+//		int parOffset=1;
+//		for (ParNode par : n.parlist)
+//			if (hmn.put(par.id, new STentry(nestingLevel,par.getType(),parOffset++)) != null) {
+//				System.out.println("Par id " + par.id + " at line "+ n.getLine() +" already declared");
+//				stErrors++;
+//			}
+//
+//		// visito le dichiarazione all'interno della funzione. Quando visito queste dichiarazioni posso incontrare di nuovo
+//		// anche dei funNode quindi si richiama questo metodo.
+//		for (Node dec : n.declist) visit(dec); // qui ripartono da -2 gli offset
+//		// visito il corpo. Questa volta è importnate che sia qua perhcè devo considerare tutto ciò che è stato dichiarato
+//		// o dai parametri o dalle dichiarazioni locali.
+//		visit(n.exp);
+//
+//		//ho visitato tutto il corpo e allora rimuovo la hashmap corrente poiche' esco dallo scope.
+//		symTable.remove(nestingLevel--);
+//		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
+		return null;
+	}
+
+	@Override
+	public Void visitNode(NewNode n){
+		return super.visitNode(n);
+	}
+
+	@Override
+	public Void visitNode(EmptyNode n){
+		return super.visitNode(n);
+	}
+
+	@Override
+	public Void visitNode(MethodNode n){
+		return super.visitNode(n);
+	}
+
+	@Override
+	public Void visitNode(RefTypeNode n){
+		return super.visitNode(n);
+	}
+
+	@Override
+	public Void visitNode(FieldNode node){
+		return super.visitNode(node);
+	}
+
+	@Override
+	public Void visitNode(ClassCallNode node){
+		return super.visitNode(node);
+	}
+
 }
