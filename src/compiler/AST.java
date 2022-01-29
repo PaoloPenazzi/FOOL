@@ -49,7 +49,7 @@ public class AST {
 		final List<FieldNode> fieldList;
 		final List<MethodNode> methodList;
 
-		ClassNode(List<FieldNode> fields, List<MethodNode> methods, String id) {
+		ClassNode(String id, List<FieldNode> fields, List<MethodNode> methods) {
 			this.id = id;
 			fieldList = Collections.unmodifiableList(fields);
 			methodList = Collections.unmodifiableList(methods);
@@ -85,7 +85,7 @@ public class AST {
 		final List<DecNode> declist;
 		final Node exp;
 
-		public MethodNode(Node e, String id, TypeNode retType, List<ParNode> paramList, List<DecNode> decList) {
+		public MethodNode(String id, TypeNode retType, List<ParNode> paramList, List<DecNode> decList, Node e) {
 			this.id = id;
 			this.retType = retType;
 			this.parlist = paramList;
@@ -102,7 +102,6 @@ public class AST {
 	// Chiamata ad un metodo della classe da fuori.
 	// var value = C.getValue();
 	public static class ClassCallNode extends Node {
-		final Node exp;
 		final String classID;
 		final String methodID;
 		final List<Node> argList;
@@ -111,8 +110,7 @@ public class AST {
 		STentry methodEntry; // id2 cercata nella Virtual Table (raggiunta tramite la Class Table)
 		                           // della classe del tipo RefTypeNode di ID1 (se ID1 non ha tale tipo si ha una notifica di errore)
 
-		public ClassCallNode(Node e, String classID, String methodID, List<Node> args) {
-			this.exp = e;
+		public ClassCallNode(String classID, String methodID, List<Node> args) {
 			this.classID = classID;
 			this.methodID = methodID;
 			this.argList = args;
@@ -143,6 +141,7 @@ public class AST {
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
+
 	
 	public static class FunNode extends DecNode {
 		final String id;

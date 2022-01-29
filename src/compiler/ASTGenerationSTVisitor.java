@@ -179,26 +179,95 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitCldec(CldecContext c) {
 		if (print) printVarAndProdName(c);
 
-		Node n = null;
-		if (c.ID(0)!=null) {
-
-			List<FieldNode> fieldList = new ArrayList<>();
-			// per ogni campo prenderci id del campo e tipo
-			for (int i = 1; i < c.ID().size(); i++) {
-				FieldNode p = new FieldNode(c.ID(i).getText(),(TypeNode) visit(c.type(i)));
-				p.setLine(c.ID(i).getSymbol().getLine());
-				fieldList.add(p);
-			}
-
-			List<MethodNode> methodNodeList = new ArrayList<>();
-			//for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
-			for (MethdecContext dec : c.methdec()) {
-				methodNodeList.add((MethodNode) visit(dec));
-			}
-
+		List<FieldNode> fieldList = new ArrayList<>();
+		// per ogni campo prenderci id del campo e tipo
+		for (int i = 1; i < c.ID().size(); i++) {
+			FieldNode p = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(i)));
+			p.setLine(c.ID(i).getSymbol().getLine());
+			fieldList.add(p);
 		}
+
+		List<MethodNode> methodNodeList = new ArrayList<>();
+		//for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+		for (MethdecContext dec : c.methdec()) {
+			methodNodeList.add((MethodNode) visit(dec));
+		}
+
+		Node n = null;
+		if (c.ID().size()>0) { //non-incomplete ST
+			// abbiamo piu' id e più type (infatti gli diamo il numero, 0 o più)
+			// il corpo si scopre facendo la visita dell'unico figlio exp.
+			// se qualcosa non ti torna guarda sempre la produzione
+			n = new ClassNode(c.ID(0).getText(), fieldList, methodNodeList);
+			n.setLine(c.CLASS().getSymbol().getLine());
+		}
+
 		return n;
 	}
+
+	@Override
+	public Node visitMethdec(MethdecContext c) {
+		if (print) printVarAndProdName(c);
+
+		List<ParNode> parList = new ArrayList<>();
+		for (int i = 1; i < c.ID().size(); i++) {
+			// prendiamo gli id ed i type da 1, perchè id(0) è l'id della funzione e type(0) pure.
+			// il type può essere inttype o booltype
+			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.type(i)));
+			p.setLine(c.ID(i).getSymbol().getLine());
+			parList.add(p);
+		}
+
+		// itero sul figlio dec della funzione e scopro tutte le dichiarazione dei figli (var o funzione).
+		// infatti, dalla sua produzione, si capisce che posso averne 0, 1 o più di dichiarazione, quindi itero.
+		List<DecNode> decList = new ArrayList<>();
+		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+
+		// discorso analogo al visitVarDec: se manca qualcosa torno un nodo null e avrò un errore sintattico.
+		Node n = null;
+		if (c.ID().size()>0) { //non-incomplete ST
+			// abbiamo piu' id e più type (infatti gli diamo il numero, 0 o più)
+			// il corpo si scopre facendo la visita dell'unico figlio exp.
+			// se qualcosa non ti torna guarda sempre la produzione
+			n = new MethodNode(c.ID(0).getText(),(TypeNode)visit(c.type(0)),parList,decList,visit(c.exp()));
+			n.setLine(c.FUN().getSymbol().getLine());
+		}
+
+		return n;
+	}
+
+	@Override
+	public Node visitDotCall(DotCallContext c) {
+		if (print) printVarAndProdName(c);
+
+		//gestiamo gli argomenti, dobbiamo scoprire il loro nodo terminale quindi classica visita
+		List<Node> arglist = new ArrayList<>();
+		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
+
+		Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist);
+		n.setLine(c.ID(0).getSymbol().getLine());
+		return n;
+	}
+
+	@Override
+	public Node visitNew(NewContext c) {
+		if (print) printVarAndProdName(c);
+
+		//gestiamo gli argomenti, dobbiamo scoprire il loro nodo terminale quindi classica visita
+		List<Node> arglist = new ArrayList<>();
+		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
+
+		Node n = new NewNode(c.ID().getText(), arglist);
+		n.setLine(c.ID().getSymbol().getLine());
+		return n;
+	}
+
+
+
+
+
+
+
 
 	/*
 	* Generazione nodo AST per la dichiarazione di variabili. L'id del nodo da dove lo prendiamo? Dal syntax tree. Il tipo
@@ -268,7 +337,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return new BoolTypeNode();
 	}
 
-	// TODO perchè in visitBoolType o visitIntType non c'è n.setLine(...) ?
+	// Indica la classe (Account, Cane, ecc)
+	@Override
+	public Node visitIdType(IdTypeContext c) {
+		if (print) printVarAndProdName(c);
+		return new RefTypeNode(c.ID().getText());
+	}
 
 	@Override
 	public Node visitInteger(IntegerContext c) {
@@ -288,6 +362,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitFalse(FalseContext c) {
 		if (print) printVarAndProdName(c);
 		return new BoolNode(false);
+	}
+
+	@Override
+	public Node visitNull(NullContext c) {
+		if (print) printVarAndProdName(c);
+		return new EmptyNode();
 	}
 
 	@Override
