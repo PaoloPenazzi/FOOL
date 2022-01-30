@@ -468,7 +468,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(ClassCallNode n){
 		if (print) printNode(n);
 
-		//cerca la dichiarazione della classe.
+		// cerca la dichiarazione della classe.
 		STentry entryC = stLookup(n.classID.id);
 		// cerco la dichiarazione del metodo nella VT corrispondente
 		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
