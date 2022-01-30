@@ -1,5 +1,10 @@
   class Account (money:int) {
-        getMoney()
+        getMoney(c:int){
+            let
+            ..
+            in
+            ..
+        }
   }
 
   var myMoney:Account = new Account(10)

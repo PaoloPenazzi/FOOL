@@ -41,6 +41,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	// ATTENZIONE: il FRONTE della symTable è sempre a livello nestinglevel. Quindi se per esempio nl=2 allora il fronte
 	// della SymTable sarà symtable.get(2)  (la prima mappa che incontriamo). symtable.get(0) è la globalità.
 	private List<Map<String, STentry>> symTable = new ArrayList<>();
+	// fare la class table per la classe attuale. Il concetto della class table è che quando noi usciamo dalla
+	// symtab non abbiamo più il riferimento ai metodi e campi della classe: con la class table ne teniamo
+	// i riferimenti in memoria. (grazie prof. Foschini).
+	private Map<String, Map<String, STentry>> classTable = new HashMap<>();
 	private int nestingLevel=0; // current nesting level
 	private int decOffset=-2; // counter for offset of local declarations at current nesting level. Gli offset delle dichiarazioni
 	// partono da -2.
@@ -334,105 +338,149 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(ClassNode n){
 		if (print) printNode(n);
-		//prendo symtable al livello attuale come per la VarNode.
-		Map<String, STentry> hm = symTable.get(nestingLevel);
 
+		// prendo symtable al livello attuale come per la VarNode.
+		Map<String, STentry> hm = symTable.get(nestingLevel);
+		List<TypeNode> allFields = new ArrayList<>();
+		List<ArrowTypeNode> allMethods = new ArrayList<>();
+
+		// creo la pallina. Gestisco la dichiarazione di classe: quindi metto il nesting level e creo il classtypenode
+		// (tipo funzionale) della classe (allFields, allMethods). I tipi dei campi finisco in due posti: qua nella dichiaraizone
+		// del tipo della classe e nella dichiarazione proprio dei campi stessi di cui dichiariamo anche il tipo.
+		STentry entry = new STentry(nestingLevel, new ClassTypeNode(allFields, allMethods), decOffset--);
+
+
+		//aggiungo nuova mappa.
+		Map<String, STentry> hmn = hm;
+		// metto nella class table il nome della classe dichiarata e poi la virtual table che andrò a riempire
+		classTable.put(n.id, hmn);
+
+		// inserimento di ID nella symtable. RICORDA CHE IL NOME DELLA classe E QUINDI LA classe, VIENE INSERITA
+		// NELLO SCOPE ESTERNO NON IN QUELLO INTERNO, QUINDI METTO L'ID NELLO SCOPE ESTERNO E POI NE CREO UN ALTRO
+		// DOVE AVVERRÀ IL RESTO DELLA ROBA.
+		if (hm.put(n.id, entry) != null) {
+			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" already declared");
+			stErrors++;
+		}
+
+
+		//creare una nuova hashmap per la symTable. entro in un nuovo scope
+		nestingLevel++;
+		symTable.add(hmn);
+
+		//entro in un nuovo scope, creo un nuovo AR e quindi devo ripartire da -2, salvandomi l'offset da cui son partito.
+		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
+		decOffset=-2;
+
+		int fieldOffset=-1;
+
+		// riempiamo le liste totali da aggiungere alla STEntry del livello globale, quindi da aggiungere alla ClassTypeNode
 		// prendiamo i campi e li salviamo
-		List<TypeNode> fieldTypes = new ArrayList<>();
-		for (FieldNode field : n.fieldList) fieldTypes.add(field.getType());
+		for (FieldNode field : n.fieldList){
+			/*		 	* Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
+	 		* In pratca il pezzo di codice qui sotto è la visitParNode.
+		 	*
+	 		* parOffset è il contatore dell'offset dei parametri
+		 	*/
+			if (hmn.put(field.id, new STentry(nestingLevel,field.getType(),fieldOffset--)) != null) {
+				System.out.println("Field id " + field.id + " at line "+ n.getLine() +" already declared");
+				stErrors++;
+			}
+
+			// allFields per la STEntry del livello globale
+			allFields.add(field.getType());
+		}
+
+		int methodOffset=0;
 
 		// prendiamo i metodi e per ognuno di questi prendiamo i tipi parametri ed il tipo di ritorno e per ognuno di questi
 		// ci facciamo un arrowtypenode (che in pratica sono tante dichiarazioni di funzioni quindi bisogna fare come
 		// in fundec). Un volta creato questo arrowtypenode lo aggiungiamo alla lista di arrowtyopenode.
-		List<ArrowTypeNode> methodTypes = new ArrayList<>();
 		for (MethodNode methodNode : n.methodList) {
-			List<TypeNode> paramMethodTypes = new ArrayList<>();
-			for (ParNode field : methodNode.parlist) paramMethodTypes.add(field.getType());
 
-			methodTypes.add(new ArrowTypeNode(paramMethodTypes, methodNode.retType));
+			if (hmn.put(methodNode.id, new STentry(nestingLevel,methodNode.getType(),methodOffset++)) != null) {
+				System.out.println("Method id " + methodNode.id + " at line "+ n.getLine() +" already declared");
+				stErrors++;
+			}
+
+			List<TypeNode> paramMethodTypes = new ArrayList<>();
+			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
+
+			allMethods.add(new ArrowTypeNode(paramMethodTypes, methodNode.retType));
+
+			// visito le dichiarazione all'interno del metodo. Quando visito queste dichiarazioni posso incontrare
+			// anche dei funNode.
+			for (Node dec : methodNode.declist) {
+				visit(dec); // qui ripartono da -2 gli offset
+			}
+
+			// visito il corpo del metodo
+			visit(methodNode.exp);
 		}
 
-		//creo la pallina. Gestisco la dichiarazione di funzione: quindi metto il nestin level e creo l'arrowtype node
-		// (tipo funzionale) della funzione (parTypes -> retType). I tipi dei parametri finisco in due posti: qua nella dichiaraizone
-		// del tipo della funzione e nella dichiarazione proprio dei parametri stessi di cui dichiariamo anche il tipo.
-		STentry entry = new STentry(nestingLevel, new ClassTypeNode(fieldTypes, methodTypes),decOffset--);
 
-		//TODO....
 
-		//inserimento di ID nella symtable. RICORDA CHE IL NOME DELLA FUNZIONE E QUINDI LA FUNZIONE, VIENE INSERITA
-		// NELLO SCOPE ESTERNO NON IN QUELLO INTERNO, QUINDI METTO L'ID NELLO SCOPE ESTERNO E POI NE CREO UN ALTRO
-		// DOVE AVVERRÀ IL RESTO DELLA ROBA.
-//		if (hm.put(n.id, entry) != null) {
-//			System.out.println("Fun id " + n.id + " at line "+ n.getLine() +" already declared");
-//			stErrors++;
-//		}
-//
-//		//creare una nuova hashmap per la symTable. entro in un nuovo scope
-//		nestingLevel++;
-//		//aggiungo nuova mappa.
-//		Map<String, STentry> hmn = new HashMap<>();
-//		symTable.add(hmn);
-//
-//		//entro in un nuovo scope, creo un nuovo AR e quindi devo ripartire da -2, salvandomi l'offset da cui son partito.
-//		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
-//		decOffset=-2;
-//
-//		/*
-//		 *
-//		 * Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
-//		 * In pratca il pezzo di codice qui sotto è la visitParNode.
-//		 *
-//		 * parOffset è il contatore dell'offset dei parametri
-//		 *
-//		 */
-//		int parOffset=1;
-//		for (ParNode par : n.parlist)
-//			if (hmn.put(par.id, new STentry(nestingLevel,par.getType(),parOffset++)) != null) {
-//				System.out.println("Par id " + par.id + " at line "+ n.getLine() +" already declared");
-//				stErrors++;
-//			}
-//
-//		// visito le dichiarazione all'interno della funzione. Quando visito queste dichiarazioni posso incontrare di nuovo
-//		// anche dei funNode quindi si richiama questo metodo.
-//		for (Node dec : n.declist) visit(dec); // qui ripartono da -2 gli offset
-//		// visito il corpo. Questa volta è importnate che sia qua perhcè devo considerare tutto ciò che è stato dichiarato
-//		// o dai parametri o dalle dichiarazioni locali.
-//		visit(n.exp);
 //
 //		//ho visitato tutto il corpo e allora rimuovo la hashmap corrente poiche' esco dallo scope.
-//		symTable.remove(nestingLevel--);
-//		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
+		symTable.remove(nestingLevel--);
+		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
 		return null;
 	}
 
 	@Override
 	public Void visitNode(NewNode n){
-		return super.visitNode(n);
+		if (print) printNode(n);
+
+		if (this.classTable.containsKey(n.id)) {
+			STentry entry = this.symTable.get(0).get(n.id);
+			n.entry = entry;
+		} else {
+			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" not declared declared");
+			stErrors++;
+		}
+		return null;
 	}
 
 	@Override
 	public Void visitNode(EmptyNode n){
-		return super.visitNode(n);
+		if (print) printNode(n);
+		return null;
 	}
 
-	@Override
-	public Void visitNode(MethodNode n){
-		return super.visitNode(n);
-	}
+	// visita già fatta nella classNode
+	//	@Override
+	//	public Void visitNode(FieldNode n){
+	//		return super.visitNode(n);
+	//	}
+	//
+	// servirebbe implementare methodNode nel caso estendissimo anche all'ereditarietà perchè in quel caso visiteremmo
+	// non più solo da classNode ma anche methodNode
+	//	@Override
+	//	public Void visitNode(MethodNode n){
+	//		if (print) printNode(n);
+	//
+	//		return null;
+	//	}
 
 	@Override
-	public Void visitNode(RefTypeNode n){
-		return super.visitNode(n);
-	}
+	public Void visitNode(ClassCallNode n){
+		if (print) printNode(n);
 
-	@Override
-	public Void visitNode(FieldNode node){
-		return super.visitNode(node);
-	}
+		//cerca la dichiarazione della classe.
+		STentry entryC = stLookup(n.classID);
+		// cerco la dichiarazione del metodo nella VT corrispondente
+		Map<String, STentry> virtualTable = classTable.get(n.classID);
+		STentry entryM = virtualTable.get(n.methodID);
 
-	@Override
-	public Void visitNode(ClassCallNode node){
-		return super.visitNode(node);
+		if (entryC == null || entryM == null) {
+			System.out.println("Class or method id " + n.classID + " at line "+ n.getLine() + " not declared");
+			stErrors++;
+		} else {
+			// se la trovo attacco la classNode e methodNode all' classCallNode.
+			n.entry = entryC;
+			n.methodEntry = entryM;
+		}
+		return null;
 	}
 
 }
