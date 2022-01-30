@@ -102,7 +102,7 @@ public class AST {
 	// Chiamata ad un metodo della classe da fuori.
 	// var value = C.getValue();
 	public static class ClassCallNode extends Node {
-		final String classID;
+		final RefTypeNode classID;
 		final String methodID;
 		final List<Node> argList;
 
@@ -110,7 +110,7 @@ public class AST {
 		STentry methodEntry; // id2 cercata nella Virtual Table (raggiunta tramite la Class Table)
 		                           // della classe del tipo RefTypeNode di ID1 (se ID1 non ha tale tipo si ha una notifica di errore)
 
-		public ClassCallNode(String classID, String methodID, List<Node> args) {
+		public ClassCallNode(RefTypeNode classID, String methodID, List<Node> args) {
 			this.classID = classID;
 			this.methodID = methodID;
 			this.argList = args;
@@ -405,6 +405,7 @@ public class AST {
 	}
 
 	public static class MethodTypeNode extends TypeNode {
+		// (int, int) -> bool
 		final ArrowTypeNode fun;
 
 		public MethodTypeNode(ArrowTypeNode fun) {

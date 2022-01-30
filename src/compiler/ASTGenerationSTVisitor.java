@@ -229,7 +229,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 			// abbiamo piu' id e più type (infatti gli diamo il numero, 0 o più)
 			// il corpo si scopre facendo la visita dell'unico figlio exp.
 			// se qualcosa non ti torna guarda sempre la produzione
-			n = new MethodNode(c.ID(0).getText(),(TypeNode)visit(c.type(0)),parList,decList,visit(c.exp()));
+			n = new MethodNode(c.ID(0).getText(),(TypeNode) visit(c.type(0)),parList,decList,visit(c.exp()));
 			n.setLine(c.FUN().getSymbol().getLine());
 		}
 
@@ -244,7 +244,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		List<Node> arglist = new ArrayList<>();
 		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
 
-		Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist);
+		Node n = new ClassCallNode(new RefTypeNode(c.ID(0).getText()), c.ID(1).getText(), arglist);
 		n.setLine(c.ID(0).getSymbol().getLine());
 		return n;
 	}

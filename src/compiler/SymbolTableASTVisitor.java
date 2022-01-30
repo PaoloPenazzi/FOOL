@@ -398,13 +398,14 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// in fundec). Un volta creato questo arrowtypenode lo aggiungiamo alla lista di arrowtyopenode.
 		for (MethodNode methodNode : n.methodList) {
 
-			if (hmn.put(methodNode.id, new STentry(nestingLevel,methodNode.getType(),methodOffset++)) != null) {
+			List<TypeNode> paramMethodTypes = new ArrayList<>();
+			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
+
+			if (hmn.put(methodNode.id, new STentry(nestingLevel, new MethodTypeNode(new ArrowTypeNode(paramMethodTypes,
+					methodNode.getType())), methodOffset++)) != null) {
 				System.out.println("Method id " + methodNode.id + " at line "+ n.getLine() +" already declared");
 				stErrors++;
 			}
-
-			List<TypeNode> paramMethodTypes = new ArrayList<>();
-			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
 
 			allMethods.add(new ArrowTypeNode(paramMethodTypes, methodNode.retType));
 
@@ -438,6 +439,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" not declared declared");
 			stErrors++;
 		}
+
 		return null;
 	}
 
@@ -467,9 +469,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		if (print) printNode(n);
 
 		//cerca la dichiarazione della classe.
-		STentry entryC = stLookup(n.classID);
+		STentry entryC = stLookup(n.classID.id);
 		// cerco la dichiarazione del metodo nella VT corrispondente
-		Map<String, STentry> virtualTable = classTable.get(n.classID);
+		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
 		STentry entryM = virtualTable.get(n.methodID);
 
 		if (entryC == null || entryM == null) {
