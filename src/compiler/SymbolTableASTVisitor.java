@@ -377,7 +377,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// riempiamo le liste totali da aggiungere alla STEntry del livello globale, quindi da aggiungere alla ClassTypeNode
 		// prendiamo i campi e li salviamo
 		for (FieldNode field : n.fieldList){
-			/*		 	* Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
+			/*
+			* Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
 	 		* In pratca il pezzo di codice qui sotto è la visitParNode.
 		 	*
 	 		* parOffset è il contatore dell'offset dei parametri
@@ -468,14 +469,19 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(ClassCallNode n){
 		if (print) printNode(n);
 
-		// cerca la dichiarazione della classe.
+		// cerca la dichiarazione della classe. Faccio la classica dichiarazione di discesa di livelli (cerco la mia istanza
+		// di classe nel mio livello o in quelli superiori).
 		STentry entryC = stLookup(n.classID.id);
-		// cerco la dichiarazione del metodo nella VT corrispondente
+		// cerco la dichiarazione del metodo nella VT corrispondente (che raggiungo passando dalla classTable attraverso
+		// il refTypeNode). Dalla Virtual Table cerco direttamente la STEntry di id2.
 		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
 		STentry entryM = virtualTable.get(n.methodID);
 
-		if (entryC == null || entryM == null) {
-			System.out.println("Class or method id " + n.classID + " at line "+ n.getLine() + " not declared");
+		if (entryC == null) {
+			System.out.println("Instance of Class " + n.classID + " at line "+ n.getLine() + " not declared");
+			stErrors++;
+		} else if (entryM == null){
+			System.out.println("Method "+ n.methodID + " of Class " + n.classID + " at line "+ n.getLine() + " not declared");
 			stErrors++;
 		} else {
 			// se la trovo attacco la classNode e methodNode all' classCallNode.

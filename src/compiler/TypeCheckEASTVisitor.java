@@ -429,6 +429,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			throw new TypeException("Invocation of a non-function " + n.methodID, n.getLine());
 		}
 
+		
 		ArrowTypeNode at = (ArrowTypeNode) t;
 
 		// errori possibili (che indicano, in ordine, i controlli da fare):
