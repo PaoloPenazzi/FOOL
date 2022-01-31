@@ -3,6 +3,9 @@ package compiler;
 import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
+
+import javax.swing.plaf.metal.MetalToggleButtonUI;
+
 import static compiler.TypeRels.*;
 
 //visitNode(n) fa il type checking di un Node n e ritorna:
@@ -287,14 +290,19 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(CallNode n) throws TypeException {
 		if (print) printNode(n,n.id);
+		ArrowTypeNode at;
 
 		// recupero tipo (che mi aspetto essere ArrowTypeNode) da STentry
 		TypeNode t = visit(n.entry); 
-		if ( !(t instanceof ArrowTypeNode) || !(t instanceof MethodTypeNode) ) {
+		if ( !(t instanceof ArrowTypeNode) && !(t instanceof MethodTypeNode) ) {
 			throw new TypeException("Invocation of a non-function " + n.id, n.getLine());
 		}
-
-		ArrowTypeNode at = (ArrowTypeNode) t;
+		// Se t è un methodtype node lo casto ad arrowtype node con il metodo fun()
+		if (t instanceof MethodTypeNode) {
+			at = ((MethodTypeNode) t).fun;
+		} else {
+			at = (ArrowTypeNode) t;
+		}
 
 		// errori possibili (che indicano, in ordine, i controlli da fare):
 		// Invocation of a non-function [id del CallNode]
@@ -422,14 +430,18 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(ClassCallNode n) throws TypeException {
 		if (print) printNode(n,n.classID.id);
+		ArrowTypeNode at;
 
 		// recupero tipo (che mi aspetto essere ArrowTypeNode) da STentry
 		TypeNode t = visit(n.entry);
-		if ( !(t instanceof ArrowTypeNode) || !(t instanceof MethodTypeNode) ) {
+		if ( !(t instanceof ArrowTypeNode) && !(t instanceof MethodTypeNode) ) {
 			throw new TypeException("Invocation of a non-function " + n.methodID, n.getLine());
 		}
-
-		ArrowTypeNode at = (ArrowTypeNode) t;
+		if (t instanceof MethodTypeNode) {
+			at = ((MethodTypeNode) t).fun;
+		} else {
+			at = (ArrowTypeNode) t;
+		}
 
 		// errori possibili (che indicano, in ordine, i controlli da fare):
 		// Invocation of a non-function [id del CallNode]

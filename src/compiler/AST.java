@@ -64,7 +64,6 @@ public class AST {
 	// nodo dichiarazione del campo
 	public static class FieldNode extends DecNode {
 		final String id;
-		final TypeNode type;
 
 		FieldNode(String id, TypeNode type) {
 			this.id = id;
