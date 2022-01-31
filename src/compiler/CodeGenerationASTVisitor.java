@@ -131,16 +131,21 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	@Override
 	public String visitNode(ClassNode n) throws VoidException {
 	  if (print) printNode(n);
+
 	  // Creo la dispatch table e aggiungo le etichette di tutti i metodi in ordine di visita. Quindi nella
-		// dispatch tabel ogni etichetta sarà al suo offset
+	  // dispatch tabel ogni etichetta sarà al suo offset. Dispatch Table univoca per ogni tipo di classe.
 	  ArrayList<String> dispatchTable = new ArrayList<>();
 	  for (MethodNode method : n.methodList) {
 		  visit(method);
+		  // int offset = method.offset;
+		  // dispatchTable.add(offset, method.label);
+		  // dobbiamo fare questo metodo add "classico" perchè l'offset è esattamente lo stesso indice della lista.
 		  dispatchTable.add(method.label);
 	  }
+
 	  String s = null;
 	  for (String label : dispatchTable) {
-		  // Per ogni label, salviamo l'indirizzo della label nell'heape successivamente incrementiamo hp.
+		  // Per ogni label, salviamo l'indirizzo della label nell'heap successivamente incrementiamo hp.
 		  s = nlJoin(s,
 					  "push " + label, // pusho sullo stack l'indirizzo (la label) dell'etichetta
 					  "lhp", // pusho sullo stack il contenuto del registro hp (heap pointer)
@@ -197,6 +202,34 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	}
 
 	@Override
+	public String visitNode(EmptyNode n) throws VoidException {
+		return "push " + -1;
+	}
+
+	@Override
+	public String visitNode(ClassCallNode n) throws VoidException {
+		if (print) printNode(n, n.methodID);
+		String argCode = null;
+		// codice degli argomenti in ORDINE ROVESCIATO
+		// devo anche visitarli ovviamente perchè potrebbero essere espressioni complicate
+		for (int i=n.argList.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.argList.get(i)));
+
+		String getAR = null;
+		// prendo la differenza di nesting level e faccio tante volte quanti sono gli scope di differenza "lw".
+		// risalendo così di AR in AR. Lo scope delle dichiarazione di classi sono sempre a scope 0 (nesting level 0) quindi
+		// farò 0 - nesting level dell'uso (che semplificato è -n.entry.nl)
+		for (int i = 0; i < -n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
+
+		return null;
+
+		//TODO da decommentare e finire...
+//		return nlJoin("lfp",
+//							argCode,
+//
+//				);
+	}
+
+	@Override
 	public String visitNode(ProgLetInNode n) {
 		if (print) printNode(n);
 		String declCode = null;
@@ -234,7 +267,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String declCode = null, popDecl = null, popParl = null;
 		for (Node dec : n.declist) {
 			declCode = nlJoin(declCode,visit(dec));
-			popDecl = nlJoin(popDecl,"pop");
+			popDecl = nlJoin(popDecl,"pop"); //popDecl = "pop \n pop \n ..."
 		}
 		for (int i=0;i<n.parlist.size();i++) popParl = nlJoin(popParl,"pop");
 		String funl = freshFunLabel(); // mi da un'etichetta nuova per la funzione ogni volta che la chiamo
