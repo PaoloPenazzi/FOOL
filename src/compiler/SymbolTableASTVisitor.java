@@ -59,8 +59,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	private STentry stLookup(String id) {
 		int j = nestingLevel;
 		STentry entry = null;
-		while (j >= 0 && entry == null) 
-			entry = symTable.get(j--).get(id);	
+		while (j >= 0 && entry == null)
+			entry = symTable.get(j--).get(id);
 		return entry;
 	}
 
@@ -94,14 +94,14 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.exp);
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(FunNode n) {
 		if (print) printNode(n);
 		//prendo symtable al livello attuale come per la VarNode.
 		Map<String, STentry> hm = symTable.get(nestingLevel);
 
-		List<TypeNode> parTypes = new ArrayList<>();  
+		List<TypeNode> parTypes = new ArrayList<>();
 		for (ParNode par : n.parlist) parTypes.add(par.getType());
 
 		//creo la pallina. Gestisco la dichiarazione di funzione: quindi metto il nestin level e creo l'arrowtype node
@@ -123,7 +123,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		symTable.add(hmn);
 
 		//entro in un nuovo scope, creo un nuovo AR e quindi devo ripartire da -2, salvandomi l'offset da cui son partito.
-		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level 
+		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
 		decOffset=-2;
 
 		/*
@@ -153,7 +153,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(VarNode n) {
 		if (print) printNode(n);
@@ -192,7 +192,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.el);
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(EqualNode n) {
 		if (print) printNode(n);
@@ -200,7 +200,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.right);
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(TimesNode n) {
 		if (print) printNode(n);
@@ -216,7 +216,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.right);
 		return null;
 	}
-	
+
 	@Override
 	public Void visitNode(PlusNode n) {
 		if (print) printNode(n);
@@ -350,7 +350,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		STentry entry = new STentry(nestingLevel, new ClassTypeNode(allFields, allMethods), decOffset--);
 
 
-		//aggiungo nuova mappa.
+		//aggiungo nuova mappa. Virtual table della Class Table.
 		Map<String, STentry> hmn = hm;
 		// metto nella class table il nome della classe dichiarata e poi la virtual table che andrò a riempire
 		classTable.put(n.id, hmn);
@@ -363,13 +363,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			stErrors++;
 		}
 
-
-		//creare una nuova hashmap per la symTable. entro in un nuovo scope
+		// creare una nuova hashmap per la symTable. entro in un nuovo scope
 		nestingLevel++;
 		symTable.add(hmn);
 
 		//entro in un nuovo scope, creo un nuovo AR e quindi devo ripartire da -2, salvandomi l'offset da cui son partito.
 		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
+		// dato che entriamo in un nuovo scope dobbiamo re-inizializzare l'offset globale.
 		decOffset=-2;
 
 		int fieldOffset=-1;
@@ -378,17 +378,18 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// prendiamo i campi e li salviamo
 		for (FieldNode field : n.fieldList){
 			/*
-			* Notare che non facciamo la visitParNode perchè è da fare qua! E' implicita nella visita della dichiarazione di funzione.
-	 		* In pratca il pezzo di codice qui sotto è la visitParNode.
+			* Notare che non facciamo la visitFieldNode perchè è da fare qua! E' implicita nella visita della dichiarazione di classe.
+	 		* In pratica il pezzo di codice qui sotto è la visitFieldNode.
 		 	*
-	 		* parOffset è il contatore dell'offset dei parametri
+	 		* fieldOffset è il contatore dell'offset dei campi
 		 	*/
-			if (hmn.put(field.id, new STentry(nestingLevel,field.getType(),fieldOffset--)) != null) {
+			if (hmn.put(field.id, new STentry(nestingLevel, field.getType(), fieldOffset--)) != null) {
 				System.out.println("Field id " + field.id + " at line "+ n.getLine() +" already declared");
 				stErrors++;
 			}
 
-			// allFields per la STEntry del livello globale
+			// allFields per la STEntry del livello globale. In allFields si setta la posizione del campo a -offset-1. Ad
+			// esempio: il primo campo avrà offset -1 quindi in allFields sarà in posizione 0 (-offset-1 = -(-1) -1 = +1 -1 = 0)
 			allFields.add(field.getType());
 		}
 
@@ -403,7 +404,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
 
 			if (hmn.put(methodNode.id, new STentry(nestingLevel, new MethodTypeNode(new ArrowTypeNode(paramMethodTypes,
-					methodNode.getType())), methodOffset++)) != null) {
+					methodNode.retType)), methodOffset++)) != null) {
 				System.out.println("Method id " + methodNode.id + " at line "+ n.getLine() +" already declared");
 				stErrors++;
 			}
@@ -420,10 +421,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			visit(methodNode.exp);
 		}
 
-
-
-//
-//		//ho visitato tutto il corpo e allora rimuovo la hashmap corrente poiche' esco dallo scope.
+		//ho visitato tutto il corpo e allora rimuovo la hashmap corrente poiche' esco dallo scope.
 		symTable.remove(nestingLevel--);
 		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
 		return null;
@@ -433,6 +431,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(NewNode n){
 		if (print) printNode(n);
 
+		// verifico se la classe "nuovata" esiste veramente
 		if (this.classTable.containsKey(n.id)) {
 			STentry entry = this.symTable.get(0).get(n.id);
 			n.entry = entry;
@@ -468,6 +467,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(ClassCallNode n){
 		if (print) printNode(n);
+
+		// ID1.ID2()
+		// con ID1 id della classe e ID2 id del metodo.
 
 		// cerca la dichiarazione della classe. Faccio la classica dichiarazione di discesa di livelli (cerco la mia istanza
 		// di classe nel mio livello o in quelli superiori).

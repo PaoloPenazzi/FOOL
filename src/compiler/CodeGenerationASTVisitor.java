@@ -141,11 +141,19 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	  String s = null;
 	  for (String label : dispatchTable) {
 		  // Per ogni label, salviamo l'indirizzo della label nell'heape successivamente incrementiamo hp.
-		  s = nlJoin(s, "push " + label, "lhp", "sw");
+		  s = nlJoin(s,
+					  "push " + label, // pusho sullo stack l'indirizzo (la label) dell'etichetta
+					  "lhp", // pusho sullo stack il contenuto del registro hp (heap pointer)
+					  "sw", // store word: poppo i due valori dalla cima dello stack. Metto il secondo all'indirizzo puntato dal primo
+					  "lhp", //  pusho sullo stack il contenuto del registro hp (heap pointer)
+					  "push"+ 1, // aggiungo 1
+					  "add", // li sommo assieme
+					  "shp"); // poppo il valore di hp aumentato (messo sullo stack e sommato ad 1) e poi lo ricarico nel registro hp
 	  }
 	  return nlJoin(
 			  "lhp",  // Pusho sullo stack il valore di hp prima di incrementarlo. Questo sarà il punto di ingresso
-			  s
+					s // creata la dispatch la scorro dall'inizio alla fine e per ciascuna etichetta la memorizzo a indirizzo
+					  // in hp e poi incremento hp
 	  );
 	}
 

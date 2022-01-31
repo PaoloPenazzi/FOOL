@@ -403,8 +403,8 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 				System.out.println("Type checking error in a method declaration: " + e.text);
 			}
 		// anche qua come nella visita della varNode, controlliamo che il corpo del metodo ritorni un tipo correlato
-		// (sottotipo di...) con quello dichiarato (es: se un metodo dichiarata torna int e gli facciamo tornare una stringa
-		// dal corpo dell funzione allora non andrà bene!).
+		// (sottotipo di...) con quello dichiarato (es: se un metodo dichiarato torna int e gli facciamo tornare una stringa
+		// dal corpo della funzione allora non andrà bene!).
 		if ( !isSubtype(visit(n.exp), ckvisit(n.retType)) )
 			throw new TypeException("Wrong return type for method " + n.id,n.getLine());
 		return null;
@@ -432,15 +432,18 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n,n.classID.id);
 		ArrowTypeNode at;
 
-		// recupero tipo (che mi aspetto essere ArrowTypeNode) da STentry
+		// recupero tipo (che mi aspetto essere MethodTypeNode) da STentry. In teoria non sarò sempre e solo un
+		// methodTypeNode?
 		TypeNode t = visit(n.entry);
 		if ( !(t instanceof ArrowTypeNode) && !(t instanceof MethodTypeNode) ) {
-			throw new TypeException("Invocation of a non-function " + n.methodID, n.getLine());
+			throw new TypeException("Invocation of a non-method " + n.methodID, n.getLine());
 		}
+
 
 		if (t instanceof MethodTypeNode) {
 			at = ((MethodTypeNode) t).fun;
 		} else {
+			System.out.println("Sono un arrowtype node");
 			at = (ArrowTypeNode) t;
 		}
 

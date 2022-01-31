@@ -170,7 +170,7 @@ exp     : exp (TIMES | DIV) exp #timesDiv
         ;
              
 type    : INT #intType
-        | BOOL #boolType
+        | BOOL #boolType // true = 1 , false = 0
         | ID #idType
  	    ;  
  	  		  
