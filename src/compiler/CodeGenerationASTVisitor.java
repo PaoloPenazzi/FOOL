@@ -3,6 +3,9 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
+
+import java.util.ArrayList;
+
 import static compiler.lib.FOOLlib.*;
 
 /*
@@ -121,6 +124,67 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
   CodeGenerationASTVisitor() {}
   CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+
+	/////////////////////// OOP ///////////////////////////////
+	@Override
+	public String visitNode(ClassNode n) throws VoidException {
+	  if (print) printNode(n);
+	  // Creo la dispatch table e aggiungo le etichette di tutti i metodi in ordine di visita. Quindi nella
+		// dispatch tabel ogni etichetta sarà al suo offset
+	  ArrayList<String> dispatchTable = new ArrayList<>();
+	  for (MethodNode method : n.methodList) {
+		  visit(method);
+		  dispatchTable.add(method.label);
+	  }
+	  String s = null;
+	  for (String label : dispatchTable) {
+		  // Per ogni label, salviamo l'indirizzo della label nell'heape successivamente incrementiamo hp.
+		  s = nlJoin(s, "push " + label, "lhp", "sw");
+	  }
+	  return nlJoin(
+			  "lhp",  // Pusho sullo stack il valore di hp prima di incrementarlo. Questo sarà il punto di ingresso
+			  s
+	  );
+	}
+
+	@Override
+	public String visitNode(MethodNode n) throws VoidException {
+		if (print) printNode(n,n.id);
+		// Genero l'etichetta
+		n.label = freshFunLabel();
+
+		String declCode = null, popDecl = null, popParl = null;
+		for (Node dec : n.declist) {
+			declCode = nlJoin(declCode,visit(dec));
+			popDecl = nlJoin(popDecl,"pop");
+		}
+		for (int i=0;i<n.parlist.size();i++) popParl = nlJoin(popParl,"pop");
+		putCode(
+				nlJoin(
+						// Stesso codice del funNode
+						n.label+":",
+						"cfp", // set $fp to $sp value
+						"lra", // load $ra value
+						declCode, // generate code for local declarations (they use the new $fp!!!)
+						visit(n.exp), // generate code for function body expression
+						"stm", // set $tm to popped value (function result)
+						popDecl, // remove local declarations from stack
+						// poppo ra e lo salvo in ra
+						"sra", // set $ra to popped value
+						// poppo via l'AL
+						"pop", // remove Access Link from stack
+						// rimuovo tutti i parametri dallo stack (poppo via tutti)
+						popParl, // remove parameters from stack
+						"sfp", // set $fp to popped value (Control Link)
+						// casa ripulita, lasciamo il regalo. Quindi rimettiamo il risultato di funzione. E ritorniamo al chiamante
+						// mettendo sulla cima dello stack ra e poi saltiamo con js.
+						"ltm", // load $tm value (function result)
+						"lra", // load $ra value
+						"js"  // jump to to popped address
+				)
+		);
+		return null;
+	}
 
 	@Override
 	public String visitNode(ProgLetInNode n) {

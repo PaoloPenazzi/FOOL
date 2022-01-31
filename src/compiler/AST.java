@@ -78,6 +78,8 @@ public class AST {
 
 	// nodo dichiarazione di un metodo
 	public static class MethodNode extends DecNode {
+		// campo label utilizzato in fase di code generation
+		String label;
 		final String id;
 		final TypeNode retType;
 		final List<ParNode> parlist;
