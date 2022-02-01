@@ -60,6 +60,97 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 	 */
 
 	@Override
+	public Void visitNode(NewNode n) throws VoidException {
+		printNode(n, "NewNode with id: " + n.id);
+		for (Node argNode : n.argList) {
+			visit(argNode);
+		}
+		visit(n.entry); // printo la entry della classe
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassCallNode n) {
+		printNode(n, "ClassCallNode with class id: " + n.classID.id + "with method id: " + n.methodID + "at nesting level: " + n.nl);
+		for (Node argNode : n.argList) {
+			visit(argNode);
+		}
+		visit(n.classID); //printo il tipo di riferimento della classe
+		visit(n.entry); // printo la entry della dichiarazione della classe
+		visit(n.methodEntry); // printo la entry della dichiarazione del metodo
+		return null;
+	}
+
+	@Override
+	public Void visitNode(EmptyNode n) {
+		printNode(n);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassNode n) {
+		printNode(n,"ClassNode with id: " + n.id );
+		for (MethodNode methodNode : n.methodList){
+			visit(methodNode);
+		}
+		for (FieldNode fieldNode : n.fieldList){
+			visit(fieldNode);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitNode(MethodNode n) {
+		printNode(n,"MethodNode with id: " + n.id);
+		visit(n.retType);
+		for (DecNode decNode : n.declist){
+			visit(decNode);
+		}
+		for (ParNode parNode : n.parlist){
+			visit(parNode);
+		}
+		visit(n.exp);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(FieldNode n) {
+		printNode(n,"FieldNode with id: " + n.id);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassTypeNode n) {
+		printNode(n);
+		for (TypeNode field : n.allFields){
+			visit(field);
+		}
+		for (ArrowTypeNode method : n.allMethods) {
+			visit(method);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitNode(RefTypeNode n) {
+		printNode(n,"RefTypeNode with id: " + n.id );
+		return null;
+	}
+
+	@Override
+	public Void visitNode(EmptyTypeNode n) {
+		printNode(n);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(MethodTypeNode n) {
+		printNode(n);
+		visit(n.fun);
+		return null;
+	}
+
+	@Override
 	public Void visitNode(ProgNode n) {
 		printNode(n);
 		visit(n.exp);
