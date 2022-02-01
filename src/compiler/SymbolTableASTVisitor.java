@@ -478,6 +478,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// il refTypeNode). Dalla Virtual Table cerco direttamente la STEntry di id2.
 
 		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
+		System.out.println(n.classID.id);
 		STentry entryM = virtualTable.get(n.methodID);
 
 		if (entryC == null) {
