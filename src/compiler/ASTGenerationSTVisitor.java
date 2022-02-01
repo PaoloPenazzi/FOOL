@@ -86,6 +86,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		// in fool.g4, infatti LET dec+ IN exp SEMIC, presenta dec+ quindi almeno un figlio ma ne posso avere n. Quindi itero
 		// su tutti
 		List<DecNode> declist = new ArrayList<>();
+		for (CldecContext dec : c.cldec()) declist.add((DecNode) visit(dec));
 		for (DecContext dec : c.dec()) declist.add((DecNode) visit(dec));
 
 		return new ProgLetInNode(declist, visit(c.exp()));
