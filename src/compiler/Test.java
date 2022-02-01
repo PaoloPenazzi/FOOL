@@ -19,6 +19,7 @@ public class Test {
 
     	System.out.println("Generating ST via lexer and parser.");
     	ParseTree st = parser.prog();
+		System.out.println(st.toStringTree(parser));
     	System.out.println("You had "+lexer.lexicalErrors+" lexical errors and "+
     		parser.getNumberOfSyntaxErrors()+" syntax errors.\n");
 
