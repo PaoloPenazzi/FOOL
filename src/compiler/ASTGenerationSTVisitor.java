@@ -77,7 +77,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return visit(c.progbody());
 	}
 
-
 	@Override
 	public Node visitLetInProg(LetInProgContext c) {
 		if (print) printVarAndProdName(c);
