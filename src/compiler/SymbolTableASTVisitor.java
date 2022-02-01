@@ -478,6 +478,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// il refTypeNode). Dalla Virtual Table cerco direttamente la STEntry di id2.
 
 		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
+		// id è il nome dell'oggetto e non della classe, come mai?
+		// n.classID confonde perchè l'ID è dell'oggetto non della classe.
+		// Come facciamo a risalire all'ID della classe? potremmo aggiugnere un campo a reftypenode?
 		System.out.println(n.classID.id);
 		STentry entryM = virtualTable.get(n.methodID);
 

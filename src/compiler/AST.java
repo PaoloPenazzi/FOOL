@@ -102,7 +102,7 @@ public class AST {
 	}
 
 	// Chiamata ad un metodo della classe da fuori.
-	// var value = C.getValue();
+	// C.getValue();
 	public static class ClassCallNode extends Node {
 		final RefTypeNode classID;
 		final String methodID;
