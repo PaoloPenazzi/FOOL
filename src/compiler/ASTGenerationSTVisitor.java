@@ -262,13 +262,6 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return n;
 	}
 
-
-
-
-
-
-
-
 	/*
 	* Generazione nodo AST per la dichiarazione di variabili. L'id del nodo da dove lo prendiamo? Dal syntax tree. Il tipo
 	* dove lo prendiamo? Beh per scoprire il tipo dovremo fare la visita del nodo nell'ST che ci ritornerà un tipo (che potrà
