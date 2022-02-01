@@ -436,7 +436,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			STentry entry = this.symTable.get(0).get(n.id);
 			n.entry = entry;
 		} else {
-			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" not declared declared");
+			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" not declared");
 			stErrors++;
 		}
 
@@ -476,6 +476,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		STentry entryC = stLookup(n.classID.id);
 		// cerco la dichiarazione del metodo nella VT corrispondente (che raggiungo passando dalla classTable attraverso
 		// il refTypeNode). Dalla Virtual Table cerco direttamente la STEntry di id2.
+
 		Map<String, STentry> virtualTable = classTable.get(n.classID.id);
 		STentry entryM = virtualTable.get(n.methodID);
 
