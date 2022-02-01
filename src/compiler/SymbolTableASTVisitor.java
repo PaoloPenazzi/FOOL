@@ -487,8 +487,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			stErrors++;
 		} else {
 			// se la trovo attacco la classNode e methodNode all' classCallNode.
-			n.entry = entryC;
-			n.methodEntry = entryM;
+			n.entry = entryC; // nesting level 0
+			n.methodEntry = entryM; // nesting level 1
+			n.nl = nestingLevel; // nesting level dell'uso
 		}
 		return null;
 	}

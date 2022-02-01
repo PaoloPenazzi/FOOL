@@ -111,6 +111,7 @@ public class AST {
 		STentry entry; //id1 cercata come per ID in IdNode e CallNode (discesa livelli)
 		STentry methodEntry; // id2 cercata nella Virtual Table (raggiunta tramite la Class Table)
 						     // della classe del tipo RefTypeNode di ID1 (se ID1 non ha tale tipo si ha una notifica di errore)
+		int nl;
 
 		public ClassCallNode(RefTypeNode classID, String methodID, List<Node> args) {
 			this.classID = classID;
