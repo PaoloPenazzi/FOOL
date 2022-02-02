@@ -5,7 +5,8 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import compiler.lib.*;
 import compiler.exc.*;
-import svm.*;
+import visualsvm.*;
+import java.nio.file.*;
 
 public class Test {
     public static void main(String[] args) throws Exception {
@@ -58,7 +59,7 @@ public class Test {
 
 		// genero codice
     	System.out.println("Generating code.");
-    	String code = new CodeGenerationASTVisitor().visit(ast);
+    	String code = new CodeGenerationASTVisitor(true).visit(ast);
 		// serializziamo e creiamo il file
     	BufferedWriter out = new BufferedWriter(new FileWriter(fileName+".asm")); 
     	out.write(code);
@@ -79,7 +80,7 @@ public class Test {
     	if (lexerASM.lexicalErrors+parserASM.getNumberOfSyntaxErrors()>0) System.exit(1);
 
     	System.out.println("Running generated code via Stack Virtual Machine.");
-    	ExecuteVM vm = new ExecuteVM(parserASM.code);
+    	ExecuteVM vm = new ExecuteVM(parserASM.code,parserASM.sourceMap,Files.readAllLines(Paths.get(fileName+".asm")));
     	vm.cpu();
 
     }

@@ -26,6 +26,8 @@ add
 shp
 lfp
 lfp
+push -3
+add
 stm
 ltm
 ltm

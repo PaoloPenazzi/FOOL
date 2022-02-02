@@ -212,7 +212,6 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	// è solo la parte del chiamante. E i metodi come si possono chiamare? In due modi con la notazione punto (come facciamo
 	// qui sotto quindi da fuori) oppure con la stessa modalità delle funzioni (quando li chiamo da detro la classe). Il chiamante deve
 	// creare la prima parte dell'AR del metodo perchè poi a completarlo ci pensa il codice generato per il corpo del metodo
-	//
 	@Override
 	public String visitNode(ClassCallNode n) throws VoidException {
 		if (print) printNode(n, n.methodID);
@@ -227,15 +226,11 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		// farò 0 - nesting level dell'uso (che semplificato è -n.entry.nl)
 		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
 
-
-
 		return nlJoin("lfp", // aggiungo control link. metto sullo stack il Control Link e il valore dei parametri
 							argCode, // aggiungo parametri. FIN QUI IL CODICE GENERATO È IDENTICO A CALL NODE!
-
 							// fin qui il codice generato è uguale rispetto a CallNode. COsa metto come AL? Ci metto l'object
 							// pointer perchè l'AL deve puntare alla parte di memoria dove è dichiarato il metodo. Ma dove è dichiarato il metodo?
 							// nel corpo della classe. Ma dove è memorizzato il corpo della classe? Dove punta l'OBJPOINT (cioè this!)
-
 							// pezzo di codice uguale ad IdNode
 							"lfp", // punto di partenza della risalita. Metto sulla cima dello stack il frame pointer ovvero
 									// il riferimento a me stesso e dal di lì risalgo con tanti lw fino a che non trovo il
@@ -243,6 +238,12 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 									// che dovrò lasciare sullo stack e poi duplicarlo per utilizzarlo per recuperare l'indirizzo
 									// del metodo a cui saltare!
 							getAR, // fa tanti lw quindi risale...
+				
+
+							//TODO PARTE AGGIUNTA
+							"push "+n.entry.offset, "add", // compute address of "id" declaration. sommo (sottraggo in realtà)
+							// quindi l'offset al fp per trovare dove si trova la dichiarazione della variabile usata e quindi il suo valore.
+							//quindi ora sullo stack avremo l'indirizzo del valore della variabile da caricare
 
 
 							"stm", // Setto tm al top dello stack che è il fp di questo AR cioè l'AL (che in questo caso è l'object pointer, ovvero
@@ -252,7 +253,6 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 							"ltm", // passaggio identico a callNode. Uno deve essere lasciato sullo stack.
 							"ltm", // quest'altro ci serve per far la somma con l'offset. Come facciamo questa somma? Saltando
 									// alla dispatch table e DAL DI LÌ FARE LA DIFFERENZA DI OFFSET!
-
 							"lw", // con lw dereferenzio e quindi salto!
 							"push "+n.methodEntry.offset, "add", // compute address of "id" declaration.
 									// Sottraggo l'offset del metodo dichiarato. Per recuperare l'indirizzo del metodo a cui saltare
@@ -682,7 +682,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		// prendo la differenza di nesting level e faccio tante volte quanti sono gli scope di differenza "lw".
 		// risalendo così di AR in AR
-		for (int i = 0;i<n.nl - n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
+		for (int i = 0; i<n.nl - n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
 		return nlJoin(
 			"lfp", //carico l'fp (che poi andremo a sottrare per trovare l'offset che corrisponde alla dichiarazione
 						//della variabile che si sta usando).
