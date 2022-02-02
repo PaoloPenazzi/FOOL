@@ -7,21 +7,7 @@ lhp
 push 1
 add
 shp
-push function1
-lhp
-sw
-lhp
-push 1
-add
-shp
 push 3
-push -1
-lhp
-sw
-lhp
-push 1
-add
-shp
 lhp
 sw
 lhp
@@ -36,6 +22,7 @@ sw
 lhp
 push 1
 add
+shp
 lfp
 lfp
 stm
@@ -54,21 +41,6 @@ cfp
 lra
 lfp
 push -1
-add
-lw
-stm
-sra
-pop
-sfp
-ltm
-lra
-js
-
-function1:
-cfp
-lra
-lfp
-push -2
 add
 lw
 stm

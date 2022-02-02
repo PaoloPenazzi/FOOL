@@ -5,6 +5,7 @@ import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
 
+//TODO non rendiamo possibile dichiarare 2 metodi in 2 classi diverse con lo stesso nome
 
 /*
 *

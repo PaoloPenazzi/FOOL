@@ -250,18 +250,18 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	@Override
 	public String visitNode(NewNode n) throws VoidException {
 
-	  String paramCode = null;
-	  String fieldsCode = null;
+	  String fieldsOnStackCode = null;
+	  String fieldsOnHeapCode = null;
 	  String dispatchPointerCode = null;
 
 	  // new Cane(5,10,20)
 
 	  for(Node param : n.argList) {
-		  paramCode = nlJoin(paramCode,visit(param)); // mettiamo sullo stack tutti i valori degli argomenti
+		  fieldsOnStackCode = nlJoin(fieldsOnStackCode,visit(param)); // mettiamo sullo stack tutti i valori degli argomenti
 
 		  // prende i valori degli argomenti, uno alla volta, dallo stack e li
 		  // mette nello heap, incrementando $hp dopo ogni singola copia
-		  fieldsCode = nlJoin(fieldsCode,
+		  fieldsOnHeapCode = nlJoin(fieldsOnHeapCode,
 								  "lhp", // pusho sullo stack il contenuto del registro hp (heap pointer)
 								  "sw", // store word: poppo i due valori dalla cima dello stack. Metto il
 				  						// secondo all'indirizzo puntato dal primo
@@ -281,9 +281,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
 
 
-	  return nlJoin(paramCode, // prima si richiama su tutti gli argomenti in ordine di apparizione
+	  return nlJoin(fieldsOnStackCode, // prima si richiama su tutti gli argomenti in ordine di apparizione
 					           		// (che mettono ciascuno il loro valore calcolato sullo stack)
-			  		fieldsCode, // prende i valori degli argomenti, uno alla volta, dallo stack e li
+			  fieldsOnHeapCode, // prende i valori degli argomenti, uno alla volta, dallo stack e li
 			  		   			// mette nello heap, incrementando $hp dopo ogni singola copia
 
 					dispatchPointerCode,		  // scrive a indirizzo $hp il dispatch pointer recuperandolo da
@@ -292,8 +292,10 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 					  // da ritornare) e incrementa $hp
 					  // eda ritornare) e incrementa $hp
 			  "push 1",
-			  "add"
+			  "add",
+			  "shp"
 			  );
+	  // shp ce l'eravamo scordato, serve? Di sicuro sì ma lascio un commento, ok angelo???
 	}
 
 	@Override

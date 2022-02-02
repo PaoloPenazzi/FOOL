@@ -1,12 +1,9 @@
 let
 
-  class List (f:int, r:List) {
+  class List (f:int) {
     fun first:int() f;
-    fun rest:List() r;
   }
-
-  var test:List = new List(3, null);
-
+  var test:List = new List(3);
 
 in
   print(test.first());
