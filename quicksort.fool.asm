@@ -36,7 +36,16 @@ sw
 lhp
 push 1
 add
-push 5
+lfp
+lfp
+stm
+ltm
+ltm
+lw
+push 0
+add
+lw
+js
 print
 halt
 

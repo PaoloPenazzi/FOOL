@@ -458,7 +458,8 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 
 		// recupero tipo (che mi aspetto essere MethodTypeNode) da STentry. In teoria non sarò sempre e solo un
 		// methodTypeNode?
-		TypeNode t = visit(n.entry);
+		TypeNode t = visit(n.methodEntry);
+		// TODO: are these check useful?
 		if ( !(t instanceof ArrowTypeNode) && !(t instanceof MethodTypeNode) ) {
 			throw new TypeException("Invocation of a non-method " + n.methodID, n.getLine());
 		}
