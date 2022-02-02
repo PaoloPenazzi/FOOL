@@ -207,6 +207,12 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return "push " + -1;
 	}
 
+	// chiamata di metodo. Cosa devo fare? In laboratorio avevamo fatto la calling sequence: chiamata della funzione e corpo
+	// della funzione. Per i metodi abbiamo visto che il corpo genera esattamente lo stesso codice quindi quello che cambia
+	// è solo la parte del chiamante. E i metodi come si possono chiamare? In due modi con la notazione punto (come facciamo
+	// qui sotto quindi da fuori) oppure con la stessa modalità delle funzioni (quando li chiamo da detro la classe). Il chiamante deve
+	// creare la prima parte dell'AR del metodo perchè poi a completarlo ci pensa il codice generato per il corpo del metodo
+	//
 	@Override
 	public String visitNode(ClassCallNode n) throws VoidException {
 		if (print) printNode(n, n.methodID);
@@ -221,14 +227,24 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		// farò 0 - nesting level dell'uso (che semplificato è -n.entry.nl)
 		for (int i = 0; i < n.nl - n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
 
+
+
 		return nlJoin("lfp", // aggiungo control link. metto sullo stack il Control Link e il valore dei parametri
 							argCode, // aggiungo parametri. FIN QUI IL CODICE GENERATO È IDENTICO A CALL NODE!
+
+							// fin qui il codice generato è uguale rispetto a CallNode. COsa metto come AL? Ci metto l'object
+							// pointer perchè l'AL deve puntare alla parte di memoria dove è dichiarato il metodo. Ma dove è dichiarato il metodo?
+							// nel corpo della classe. Ma dove è memorizzato il corpo della classe? Dove punta l'OBJPOINT (cioè this!)
+
+							// pezzo di codice uguale ad IdNode
 							"lfp", // punto di partenza della risalita. Metto sulla cima dello stack il frame pointer ovvero
 									// il riferimento a me stesso e dal di lì risalgo con tanti lw fino a che non trovo il
 									// corpo della dichiarazione della classe. Il puntatore a questo corpo sarà l'access link
 									// che dovrò lasciare sullo stack e poi duplicarlo per utilizzarlo per recuperare l'indirizzo
 									// del metodo a cui saltare!
 							getAR, // fa tanti lw quindi risale...
+
+
 							"stm", // Setto tm al top dello stack che è il fp di questo AR cioè l'AL (che in questo caso è l'object pointer, ovvero
 									// il dispatch pointer cioè l'indirizzo di riferimento della dispatch table )
 									// che ci serve usare e lasciare
@@ -236,6 +252,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 							"ltm", // passaggio identico a callNode. Uno deve essere lasciato sullo stack.
 							"ltm", // quest'altro ci serve per far la somma con l'offset. Come facciamo questa somma? Saltando
 									// alla dispatch table e DAL DI LÌ FARE LA DIFFERENZA DI OFFSET!
+
 							"lw", // con lw dereferenzio e quindi salto!
 							"push "+n.methodEntry.offset, "add", // compute address of "id" declaration.
 									// Sottraggo l'offset del metodo dichiarato. Per recuperare l'indirizzo del metodo a cui saltare
@@ -247,14 +264,21 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				);
 	}
 
+
+	// ora creiamo gli oggetti. Ricrodarsi il layout degli oggetti. Alloca gli oggetti con offset negativi. Li alloca da quello
+	// di offset meno -n fino al -1 e poi cosa mette il dispatch pointer che è anche nella posizione di riferimento a offset 0.
+	// I valori da dare ai campi sono negli argomenti. Prima visito tutti gli argomenti. Quindi alla fine di questa parte ci sono
+	// tutti i valori degli argomenti sulla cima dello stack. Ma sulla cima dello stack c'è l'n-ennesimo a questo punto li vado a copiare
+	// nello heap così l'n-esimo è in fondo all'heap. Allocati i valori di tutti i campi devo mettere ora il DIspatchPointer.
+	// Quidni ora alloco il DP e dove allocherò il dp sarà la poziione di riferimento perchè lui deve finire a offset 0 e quindi
+	// del'object pointer. Ma io voglio tornare l'objpointer e subito prima di aumentare l'hp devo tornare sullo stack questo valore.
+	//
 	@Override
 	public String visitNode(NewNode n) throws VoidException {
 
 	  String fieldsOnStackCode = null;
 	  String fieldsOnHeapCode = null;
 	  String dispatchPointerCode = null;
-
-	  // new Cane(5,10,20)
 
 	  for(Node param : n.argList) {
 		  fieldsOnStackCode = nlJoin(fieldsOnStackCode,visit(param)); // mettiamo sullo stack tutti i valori degli argomenti
@@ -283,17 +307,18 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 
 	  return nlJoin(fieldsOnStackCode, // prima si richiama su tutti gli argomenti in ordine di apparizione
 					           		// (che mettono ciascuno il loro valore calcolato sullo stack)
-			  fieldsOnHeapCode, // prende i valori degli argomenti, uno alla volta, dallo stack e li
+			  			fieldsOnHeapCode, // prende i valori degli argomenti, uno alla volta, dallo stack e li
 			  		   			// mette nello heap, incrementando $hp dopo ogni singola copia
 
-					dispatchPointerCode,		  // scrive a indirizzo $hp il dispatch pointer recuperandolo da
+						dispatchPointerCode,		  // scrive a indirizzo $hp il dispatch pointer recuperandolo da
 							  				// contenuto indirizzo MEMSIZE + offset classe ID
-			  "lhp",	// carica sullo stack il valore di $hp (indirizzo object pointer
-					  // da ritornare) e incrementa $hp
-					  // eda ritornare) e incrementa $hp
-			  "push 1",
-			  "add",
-			  "shp"
+					    "lhp",	// carica sullo stack il valore di $hp (indirizzo object pointer
+							  // da ritornare) e incrementa $hp
+							  // eda ritornare) e incrementa $hp
+					    "lhp", //devo duplicarlo perchè quando lo addo lo tolgo
+					    "push 1",
+					    "add",
+					    "shp"
 			  );
 	  // shp ce l'eravamo scordato, serve? Di sicuro sì ma lascio un commento, ok angelo???
 	}
@@ -633,7 +658,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 					"js"  // jump to popped address (saving address of subsequent instruction in $ra). salto all'indirizzo indicato
 					// alla cima dello stack. ha il side effect che mette nell'indirizzo RA l'indirizzo dell'istruzione successiva.
 			);
-		} else {
+		}
+		else {
 			return nlJoin("lfp",
 					argCode,
 					"lfp",

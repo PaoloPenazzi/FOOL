@@ -20,6 +20,7 @@ add
 lhp
 sw
 lhp
+lhp
 push 1
 add
 shp
