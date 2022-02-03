@@ -92,7 +92,7 @@ import static compiler.lib.FOOLlib.*;
 * .
 * .
 * valore primo parametro                    [offset 1]
-* AL:address (fp) di AR dichiarazione       <- $fp in codice body della funz //(posizione di riferimento sull'Access Link perchè è il punto più usato
+* AL: address (fp) di AR dichiarazione       <- $fp in codice body della funz //(posizione di riferimento sull'Access Link perchè è il punto più usato
 * Return Address													// RA comodo averlo qui in mezzo. ma cosa succede agli offset? bisogna partire da -2.
 * valore/addr prima var/funz dichiarata     [offset -2]
 * valore/addr seconda var/funz              [offset -3]
@@ -152,7 +152,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 					  "lhp", // pusho sullo stack il contenuto del registro hp (heap pointer)
 					  "sw", // store word: poppo i due valori dalla cima dello stack. Metto il secondo all'indirizzo puntato dal primo
 					  "lhp", //  pusho sullo stack il contenuto del registro hp (heap pointer)
-					  "push "+ 1, // aggiungo 1
+					  "push 1", // aggiungo 1
 					  "add", // li sommo assieme
 					  "shp"); // poppo il valore di hp aumentato (messo sullo stack e sommato ad 1) e poi lo ricarico nel registro hp
 	  }
@@ -232,6 +232,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 							// pointer perchè l'AL deve puntare alla parte di memoria dove è dichiarato il metodo. Ma dove è dichiarato il metodo?
 							// nel corpo della classe. Ma dove è memorizzato il corpo della classe? Dove punta l'OBJPOINT (cioè this!)
 							// pezzo di codice uguale ad IdNode
+
 							"lfp", // punto di partenza della risalita. Metto sulla cima dello stack il frame pointer ovvero
 									// il riferimento a me stesso e dal di lì risalgo con tanti lw fino a che non trovo il
 									// corpo della dichiarazione della classe. Il puntatore a questo corpo sarà l'access link
@@ -239,21 +240,21 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 									// del metodo a cui saltare!
 							getAR, // fa tanti lw quindi risale...
 
-
-							//TODO PARTE AGGIUNTA
 							"push "+n.entry.offset, "add", // compute address of "id" declaration. sommo (sottraggo in realtà)
 							// quindi l'offset al fp per trovare dove si trova la dichiarazione della variabile usata e quindi il suo valore.
 							//quindi ora sullo stack avremo l'indirizzo del valore della variabile da caricare
-
+							"lw",
 
 							"stm", // Setto tm al top dello stack che è il fp di questo AR cioè l'AL (che in questo caso è l'object pointer, ovvero
 									// il dispatch pointer cioè l'indirizzo di riferimento della dispatch table )
 									// che ci serve usare e lasciare
 									// sullo stack (che dovremo quindi duplicare).
 							"ltm", // passaggio identico a callNode. Uno deve essere lasciato sullo stack.
+
 							"ltm", // quest'altro ci serve per far la somma con l'offset. Come facciamo questa somma? Saltando
 									// alla dispatch table e DAL DI LÌ FARE LA DIFFERENZA DI OFFSET!
 							"lw", // con lw dereferenzio e quindi salto!
+
 							"push "+n.methodEntry.offset, "add", // compute address of "id" declaration.
 									// Sottraggo l'offset del metodo dichiarato. Per recuperare l'indirizzo del metodo a cui saltare
 									// devo usare l'offset di id2 della dispatch tabel di riferimento riferita all'oggetto.
@@ -264,7 +265,6 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				);
 	}
 
-
 	// ora creiamo gli oggetti. Ricrodarsi il layout degli oggetti. Alloca gli oggetti con offset negativi. Li alloca da quello
 	// di offset meno -n fino al -1 e poi cosa mette il dispatch pointer che è anche nella posizione di riferimento a offset 0.
 	// I valori da dare ai campi sono negli argomenti. Prima visito tutti gli argomenti. Quindi alla fine di questa parte ci sono
@@ -272,7 +272,6 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	// nello heap così l'n-esimo è in fondo all'heap. Allocati i valori di tutti i campi devo mettere ora il DIspatchPointer.
 	// Quidni ora alloco il DP e dove allocherò il dp sarà la poziione di riferimento perchè lui deve finire a offset 0 e quindi
 	// del'object pointer. Ma io voglio tornare l'objpointer e subito prima di aumentare l'hp devo tornare sullo stack questo valore.
-	//
 	@Override
 	public String visitNode(NewNode n) throws VoidException {
 
@@ -296,9 +295,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		  								  // e poi lo ricarico nel registro hp
 	  }
 
-		  dispatchPointerCode = nlJoin("push " + ExecuteVM.MEMSIZE,
-											  "push "+ n.entry.offset,
-											  "add",
+		  dispatchPointerCode = nlJoin("push " + ( ExecuteVM.MEMSIZE + n.entry.offset) ,
+											  "lw",
 											  "lhp",
 											  "sw");
 
@@ -682,14 +680,16 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		// prendo la differenza di nesting level e faccio tante volte quanti sono gli scope di differenza "lw".
 		// risalendo così di AR in AR
-		for (int i = 0; i<n.nl - n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
+		System.out.println(n.nl);
+		System.out.println(n.entry.nl);
+		for (int i = 0; i< n.nl - n.entry.nl; i++) getAR=nlJoin(getAR,"lw");
 		return nlJoin(
 			"lfp", //carico l'fp (che poi andremo a sottrare per trovare l'offset che corrisponde alla dichiarazione
 						//della variabile che si sta usando).
 				getAR, // retrieve address of frame containing "id" declaration
 			              // by following the static chain (of Access Links). Qui avrò tanti lw così risalgo la catena statica
 				         // tante volte quanto è la differenza tra questo posto dove uso la variabile e dove la dichiaro.
-			"push "+n.entry.offset, "add", // compute address of "id" declaration. sommo (sottraggo in realtà)
+				"push "+n.entry.offset, "add", // compute address of "id" declaration. sommo (sottraggo in realtà)
 				// quindi l'offset al fp per trovare dove si trova la dichiarazione della variabile usata e quindi il suo valore.
 				//quindi ora sullo stack avremo l'indirizzo del valore della variabile da caricare
 			"lw" // load value of "id" variable. Piglia l'indirizzo dallo stack e mette il valore. in pratica risalgo.

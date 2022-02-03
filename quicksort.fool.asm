@@ -7,16 +7,36 @@ lhp
 push 1
 add
 shp
-push 3
+push function1
 lhp
 sw
 lhp
 push 1
 add
 shp
-push 10000
-push -2
+push 3
+push 5
+push 4
+lhp
+sw
+lhp
+push 1
 add
+shp
+lhp
+sw
+lhp
+push 1
+add
+shp
+lhp
+sw
+lhp
+push 1
+add
+shp
+push 9998
+lw
 lhp
 sw
 lhp
@@ -28,11 +48,12 @@ lfp
 lfp
 push -3
 add
+lw
 stm
 ltm
 ltm
 lw
-push 0
+push 1
 add
 lw
 js
@@ -43,7 +64,24 @@ function0:
 cfp
 lra
 lfp
+lw
 push -1
+add
+lw
+stm
+sra
+pop
+sfp
+ltm
+lra
+js
+
+function1:
+cfp
+lra
+lfp
+lw
+push -3
 add
 lw
 stm

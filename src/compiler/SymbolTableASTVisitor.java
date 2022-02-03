@@ -396,12 +396,15 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 		int methodOffset=0;
 
+
+
 		// prendiamo i metodi e per ognuno di questi prendiamo i tipi parametri ed il tipo di ritorno e per ognuno di questi
 		// ci facciamo un arrowtypenode (che in pratica sono tante dichiarazioni di funzioni quindi bisogna fare come
 		// in fundec). Un volta creato questo arrowtypenode lo aggiungiamo alla lista di arrowtyopenode.
 		for (MethodNode methodNode : n.methodList) {
 
 			List<TypeNode> paramMethodTypes = new ArrayList<>();
+			//TODO CONTROLLARE CHE VADA BENE : COME CONTROLLO I NODI (OFFSET, NL)?
 			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
 
 			if (hmn.put(methodNode.id, new STentry(nestingLevel, new MethodTypeNode(new ArrowTypeNode(paramMethodTypes,
@@ -412,6 +415,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 			allMethods.add(new ArrowTypeNode(paramMethodTypes, methodNode.retType));
 
+			nestingLevel++;
+			Map<String, STentry> hmd = new HashMap<>();
+			symTable.add(hmd);
+
 			// visito le dichiarazione all'interno del metodo. Quando visito queste dichiarazioni posso incontrare
 			// anche dei funNode.
 			for (Node dec : methodNode.declist) {
@@ -420,6 +427,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 			// visito il corpo del metodo
 			visit(methodNode.exp);
+
+			symTable.remove(nestingLevel--);
+
 		}
 
 		//ho visitato tutto il corpo e allora rimuovo la hashmap corrente poiche' esco dallo scope.
@@ -427,6 +437,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level . Ripristino l'offset in cui ero.
 		return null;
 	}
+
 
 	@Override
 	public Void visitNode(NewNode n){

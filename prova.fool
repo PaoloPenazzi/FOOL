@@ -1,14 +1,5 @@
-  class Account (money:int) {
-        getMoney(c:int){
-            let
-            ..
-            in
-            ..
-        }
-  }
-
-  var myMoney:Account = new Account(10)
-  var yourMoney:Account = new Account(10)
-
-  var totalMoney = myMoney.getMoney();
-  var totalMoney = getMoney(10, y)
+let
+  var x:int = 1;
+  fun g:int () x;
+in  
+  print ( g() );

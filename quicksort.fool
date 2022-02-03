@@ -1,9 +1,10 @@
 let
 
-  class List (f:int) {
+  class List (f:int, r:int, l:int) {
     fun first:int() f;
+    fun second:int() l;
   }
-  var test:List = new List(3);
+  var test:List = new List(3,5,4);
 
 in
-  print(test.first());
+  print(test.second());
