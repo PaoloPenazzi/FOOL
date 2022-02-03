@@ -215,7 +215,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(NotNode n) throws TypeException {
 		if (print) printNode(n);
 		TypeNode e = visit(n.exp);
-		if ( areBoolean(e) )
+		if ( !areBoolean(e) )
 			throw new TypeException("Not operator applied to non-boolean exp ",n.getLine());
 		// è un ! quindi cosa torniamo? Un booleano!
 		return new BoolTypeNode();

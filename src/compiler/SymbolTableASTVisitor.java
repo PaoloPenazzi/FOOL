@@ -404,7 +404,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		for (MethodNode methodNode : n.methodList) {
 
 			List<TypeNode> paramMethodTypes = new ArrayList<>();
-			//TODO CONTROLLARE CHE VADA BENE : COME CONTROLLO I NODI (OFFSET, NL)?
 			for (ParNode param : methodNode.parlist) paramMethodTypes.add(param.getType());
 
 			if (hmn.put(methodNode.id, new STentry(nestingLevel, new MethodTypeNode(new ArrowTypeNode(paramMethodTypes,
@@ -418,6 +417,18 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			nestingLevel++;
 			Map<String, STentry> hmd = new HashMap<>();
 			symTable.add(hmd);
+			int prevNLDecOffsetMethod=decOffset; // stores counter for offset of declarations at previous nesting level
+			decOffset=-2;
+
+			int parOffset=1;
+			for (ParNode par : methodNode.parlist) {
+				STentry parEntry = new STentry(nestingLevel,par.getType(),parOffset++);
+				if (hmd.put(par.id, parEntry) != null) {
+					System.out.println("Par id " + par.id + " at line "+ n.getLine() +" already declared");
+					stErrors++;
+				}
+
+			}
 
 			// visito le dichiarazione all'interno del metodo. Quando visito queste dichiarazioni posso incontrare
 			// anche dei funNode.
@@ -429,6 +440,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			visit(methodNode.exp);
 
 			symTable.remove(nestingLevel--);
+			decOffset=prevNLDecOffsetMethod; // restores counter for offset of declarations at previous nesting level
 
 		}
 
@@ -445,12 +457,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 		// verifico se la classe "nuovata" esiste veramente
 		if (this.classTable.containsKey(n.id)) {
-			STentry entry = this.symTable.get(0).get(n.id);
-			n.entry = entry;
+			n.entry = this.symTable.get(0).get(n.id);
 		} else {
 			System.out.println("Class id " + n.id + " at line "+ n.getLine() +" not declared");
 			stErrors++;
 		}
+
+		for (Node node : n.argList) visit(node);
 
 		return null;
 	}
