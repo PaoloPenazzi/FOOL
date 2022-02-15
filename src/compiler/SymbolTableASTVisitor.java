@@ -5,8 +5,6 @@ import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
 
-//TODO non rendiamo possibile dichiarare 2 metodi in 2 classi diverse con lo stesso nome
-
 /*
 *
 * Realizziamo la prima fase della semantic analysis vista a lezione: associare
@@ -352,7 +350,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 
 		//aggiungo nuova mappa. Virtual table della Class Table.
-		Map<String, STentry> hmn = hm;
+		Map<String, STentry> hmn = new HashMap<>();
 		// metto nella class table il nome della classe dichiarata e poi la virtual table che andrò a riempire
 		classTable.put(n.id, hmn);
 

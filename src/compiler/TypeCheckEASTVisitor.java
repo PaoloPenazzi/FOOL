@@ -351,7 +351,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		return new IntTypeNode();
 	}
 
-// gestione tipi incompleti	(se lo sono lancia eccezione)
 	
 	@Override
 	public TypeNode visitNode(ArrowTypeNode n) throws TypeException {
@@ -459,11 +458,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		// recupero tipo (che mi aspetto essere MethodTypeNode) da STentry. In teoria non sarò sempre e solo un
 		// methodTypeNode?
 		TypeNode t = visit(n.methodEntry);
-		// TODO: are these check useful?
+
 		if ( !(t instanceof ArrowTypeNode) && !(t instanceof MethodTypeNode) ) {
 			throw new TypeException("Invocation of a non-method " + n.methodID, n.getLine());
 		}
-
 
 		if (t instanceof MethodTypeNode) {
 			at = ((MethodTypeNode) t).fun;

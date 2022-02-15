@@ -1,5 +1,18 @@
 let
+
+  class List (f:int, r:List) {
+      fun first:int() f;
+      fun rest:List() r;
+    }
+
+   class Pippo (f:int, r:Pippo) {
+       fun first:int() f;
+       fun rest:Pippo() r;
+    }
+
+  var l:List = new List (2,null);
+  var w:Pippo = new Pippo (3,null);
   var x:int = 1;
   fun g:int () x;
 in  
-  print ( g() );
+  print ( w.first() );

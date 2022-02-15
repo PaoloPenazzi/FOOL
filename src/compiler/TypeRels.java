@@ -3,10 +3,6 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 
-/*
- * ci dovremo lavorare per il progetto.
- */
-
 public class TypeRels {
 
 	// 				gerarchia dei tipi:
@@ -37,7 +33,7 @@ public class TypeRels {
 					((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
 		}
 
-		System.out.println("Cazzoooo c'è un errore di tipoooooo");
+		System.out.println("Type error");
 		return false;
 	}
 
@@ -50,8 +46,5 @@ public class TypeRels {
 		}
 		return true;
 	}
-
-	// TODO create method isSubClass
-	// TODO check functioning of TypeCheckEASTVisitor in eq ge le visits
 
 }
